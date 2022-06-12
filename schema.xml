@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<schema>
+
+<table name="g_list_plugin">
+    <field name="id" type="int(11)" null="0" auto_increment="1" />
+    <field name="term" type="varchar(255)" null="0" />
+    <field name="specification" type="varchar(255)" null="0" />
+	<field name="synonyms" type="varchar(255)" null="0" />
+    <field name="links" type="varchar(255)" null="0" />
+    <key name="PRIMARY" unique="1">
+        <column name="id" />
+    </key>
+</table>
+
+<table name="g_options_plugin">
+	<field name="id" type="int(11)" null="0" auto_increment="1" />
+	<field name="g_wrap_type" type="varchar(20)" null="0" />
+    <key name="PRIMARY" unique="1">
+        <column name="id" />
+    </key>	
+</table> 
+
+</schema>
