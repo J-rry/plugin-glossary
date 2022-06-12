@@ -5,7 +5,7 @@ Ext.define('Plugin.glossary.g_data_props', {
     closeAction: 'hide',
     title: '',
     width: 650,
-    height: 183,
+    height: 300,
     layout: 'vbox',
     modal: true,
     resizable: false,
@@ -22,7 +22,7 @@ Ext.define('Plugin.glossary.g_data_props', {
             border: false,
             activeTab: 0,
             bodyStyle: 'background: none',
-            height: 120,
+            height: 200,
             defaults: {bodyStyle: 'background:none; padding:5px'},
             items: [{
                 title: _('Термин'),
