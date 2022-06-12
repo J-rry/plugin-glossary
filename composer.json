@@ -1,5 +1,5 @@
 {
-    "name": "dany/plugin-glossary",
+    "name": "cetera-labs/plugin-glossary",
     "description": "Глоссарий сайта",
     "type": "cetera-cms-plugin",
     "license": "MIT",
