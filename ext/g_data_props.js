@@ -41,11 +41,11 @@ Ext.define('Plugin.glossary.g_data_props', {
                     }, {
                         fieldLabel: _('Синонимы'),
                         name: 'synonyms',
-                        allowBlank: false
+                        allowBlank: true
                     }, {
                         fieldLabel: _('Ссылки'),
                         name: 'links',
-                        allowBlank: false
+                        allowBlank: true
                     },
                 ]
             }]

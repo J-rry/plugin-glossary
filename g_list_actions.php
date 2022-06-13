@@ -10,14 +10,14 @@ $res = array(
 $action = $_POST['action'];
 $id = (int)$_POST['id'];
 
-if ($action == 'delete_redirect') {
+if ($action == 'delete_term') {
 	
 	$query_del = 'DELETE FROM g_list_plugin WHERE id=?';
 	$application->getConn()->executeQuery($query_del, array($id));
 	$res['success'] = true;
 }
 
-if ($action == 'save_redirect') {
+if ($action == 'save_term') {
 
 	$query = 'g_list_plugin SET term=?, specification=?, synonyms=?, links=?';
         
