@@ -267,7 +267,7 @@ class Glossary{
     $struct = $this->struct;
 
     $dataForJs = json_encode($this->createDataForJS($this->data));
-    $dataContainer = "<div id='glossary-data' style='display: none;' data-glossary='$dataForJs'></div>";
+    $dataContainer = "<div style='display: none;' data-glossary='$dataForJs'></div>";
 
     $content = $dataContainer;
 
