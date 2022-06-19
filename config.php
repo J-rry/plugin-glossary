@@ -15,14 +15,3 @@ if ( $this->getBo() && $this->getUser() && $this->getUser()->isAdmin() )
     ));
     
 }
-
-//use Glossary\Glossary;
-//Glossary::inint();
-
-//$conn->executeQuery('DROP TABLE IF EXISTS g_list_plugin');
-\Cetera\Application::getInstance()->getConn()->executeQuery("CREATE TABLE IF NOT EXISTS g_list_plugin 
-(id int(11) NOT NULL, 
-term varchar(60), 
-specification varchar(500), 
-synonyms varchar(500), 
-links varchar(1000))");

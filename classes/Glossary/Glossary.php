@@ -2,113 +2,219 @@
 
 namespace Glossary;
 
-use Cetera\Section;
-//use Cetera\Application;
-
 class Glossary{
 
-  static $dir;
-  static $glossaryCatalog;
-  static $glossaryMaterial;
-  static $data;
+  protected $mainCatalog;
+  protected $glossaryCatalog;
+  protected $glossaryMaterial;
+  protected $data;
+  protected $struct;
 
-  public static function testCode() {
-    //Получить данные из материала
-    //$data = self::$glossaryMaterial['text'];
-
-    //Проверяем, есть ли материал
-    //$data = self::$glossaryCatalog->getMaterials()->where('alias="index"');
-
-    //$data = self::$glossaryCatalog->getMaterialByAlias('index')['show_future'];
-
-    self::toFile($data, true);
+  public function __construct() {
+    $this->initGlossary();
   }
 
-  public function toData($data) {
-    $fields = [];
-    $fields[0] = $data['term'];
-    $fields[1] = $data['specification'];
-    $fields[2] = $data['synonyms'];
-    $fields[3] = $data['links'];
-
-    return $fields;
+  public function reloadGlossary() {
+    $this->glossaryCatalog->delete();
+    $this->initGlossary();
   }
 
-  public function toFile($data, $var) {
-    if($var) {
-      file_put_contents(dirname(__FILE__).'/../../test.php',"<?php\nreturn " . var_export($data, true) . ";");
-    } else {
-      file_put_contents(dirname(__FILE__).'/../../test.php',"<?php\nreturn " . $data . ";");
-    } 
-  }
+  public function initGlossary() {
+    $this->mainCatalog = \Cetera\Application::getInstance()->getServer();
+    $this->data = $this->getData();
+    $this->struct = $this->getDataStruct();
 
-  public static function inint(){
-
-    //Получаем корневой каталог
-    $section = Section::getByID(1);
-    self::$dir = $section;
-
-    //Ищем упоминания терминов
-    self::initLinks();
-
-    //Получаем данные из бд
-    self::getData();
-
-    $hasNotGlossary = empty($section->findChildByAlias('glossary'));
-
-    //Создаём раздел Глоссарий
+    //Создаём раздел Глоссарий, если его нет
+    $hasNotGlossary = empty($this->mainCatalog->findChildByAlias('glossary'));
     if($hasNotGlossary) {
-      $section->createChild([
+
+      //Ищем упоминания терминов
+      $this->initLinks();
+      //$this->data = $this->getData();
+
+      $this->mainCatalog->createChild([
         'name' => 'Глоссарий',
         'alias' => 'glossary',
         'typ' => \Cetera\ObjectDefinition::findByAlias('materials')
       ]);
+
+      $this->glossaryCatalog = $this->mainCatalog->getChildByAlias('glossary');
+
+      //Создаём главную страницу глоссария, если её нет
+      $this->createGlossaryMaterial('index', 'Глоссарий', $this->createGlossaryContent());
+      $this->glossaryMaterial = $this->glossaryCatalog->getMaterialByAlias('index');
+  
+      //Инициализируем создание матереалов, полученных терминов
+      $this->initTermsPages();
     }
 
-    self::$glossaryCatalog = $section->getChildByAlias('glossary');
-
-    //Создаём главную страницу глоссария
-    self::createGlossaryMaterial('index', 'Глоссарий');
-    self::$glossaryMaterial = self::$glossaryCatalog->getMaterialByAlias('index');
-
-    //Наполняем главную страницу контентом
-    self::updatePageContent(self::$glossaryMaterial, 'Глоссарий', self::createGlossaryContent());
-
-    //Инициализируем создание матереалов, полученных терминов
-    self::initTermsPages();
+    $this->glossaryCatalog = $this->mainCatalog->getChildByAlias('glossary');
+    $this->glossaryMaterial = $this->glossaryCatalog->getMaterialByAlias('index');
   }
 
-  public static function initLinks() {
-    $dataFromDB = include __DIR__ . '/../../g_data.php';
-    $newData = [];
-    foreach($dataFromDB as $term) {
-      $term['links'] = self::findTermReference($term);
-      $newData[] = $term;
-      $query = 'UPDATE g_list_plugin SET term=?, specification=?, synonyms=?, links=? WHERE term=' . $term['term'];
-      \Cetera\Application::getInstance()->getConn()->executeQuery($query, $term);
+  public function createDataForJS($data) {
+    $newData = array_map(function($term) {
+      $term[4] = $this->toAlias($term[0]);
+      return $term;
+    }, $data);
+
+    return $newData;
+  }
+
+  protected function toAlias($name) {
+    if(preg_match('/[А-Яа-яЁё]/u', $name)) {
+      $name = mb_strtolower($name);
+      $ruAlphabet = [
+        'а' => 'a', 
+        'б' => 'b', 
+        'в' => 'v', 
+        'г' => 'g', 
+        'д' => 'd', 
+        'е' => 'e', 
+        'ё' => 'yo', 
+        'ж' => 'j', 
+        'з' => 'z', 
+        'и' => 'i', 
+        'й' => 'y', 
+        'к' => 'k', 
+        'л' => 'l', 
+        'м' => 'm', 
+        'н' => 'n', 
+        'о' => 'o', 
+        'п' => 'p', 
+        'р' => 'r', 
+        'с' => 's', 
+        'т' => 't', 
+        'у' => 'u', 
+        'ф' => 'f', 
+        'х' => 'h', 
+        'ц' => 'c', 
+        'ч' => 'ch', 
+        'ш' => 'sh', 
+        'щ' => 'shi', 
+        'ъ' => 'w', 
+        'ы' => 'ii', 
+        'ь' => 'q', 
+        'э' => 'ee', 
+        'ю' => 'yu', 
+        'я' => 'ya'
+      ];
+      $alias = 'ru-' . strtr($name, $ruAlphabet);
+      return $alias;
     }
-    file_put_contents(dirname(__FILE__).'/../../g_data.php',"<?php\nreturn " . var_export($newData, true) . ";");
+      
+    return mb_strtolower($name);
+  }
+
+  public function toData($data) {
+    return [
+      $data['term'], 
+      $data['specification'], 
+      $data['synonyms'], 
+      $data['links']
+    ];
+  }
+
+  public function createNewTerm($term) {
+
+    $term['links'] = $this->findTermReference($term);
+    
+    $this->data = $this->getData(0);
+
+    $isUpdate = false;
+    $newData = [];
+    foreach($this->data as $data) {
+      if((int)$data['id'] === (int)$term['id']) {
+        $this->glossaryCatalog->getMaterialByAlias(mb_strtolower($data['term']))->delete();
+        $newData[] = $term;
+        $isUpdate = true;
+      } else {
+        $newData[] = $data;
+      }
+    }
+    if(!$isUpdate) {
+      $newData[] = $term;
+    }
+
+    $this->data = array_map(fn($data) => $this->toData($data), $newData);
+    $this->struct = $this->getDataStruct();
+    $this->updatePageContent($this->glossaryMaterial, "Глоссарий", $this->createGlossaryContent());
+
+    $formatedTerm = $this->toData($term);
+    $this->createTermPage($formatedTerm);
+
+  }
+  public function deleteTerm($id) {
+    $termData = $this->getTermById($id);
+    $material = $this->glossaryCatalog->getMaterialByAlias($this->toAlias($termData['term']));
+    $material->delete();
+
+    $this->deleteDataById($id);
+    $this->struct = $this->getDataStruct();
+    $this->updatePageContent($this->glossaryMaterial, "Глоссарий", $this->createGlossaryContent());
+  }
+
+  protected function deleteDataById($id) {
+    $dataFromDB = include __DIR__ . '/../../g_data.php';
+    $newData = array_filter($dataFromDB, function($data) use ($id) {
+      return (int)$data['id'] !== $id;
+    });
+    $newData = array_map(fn($data) => $this->toData($data), $newData);
+    $this->data = $newData;
+  }
+
+  public function initLinks() {
+    //$dataFromDB = include __DIR__ . '/../../g_data.php';
+    $data = $this->data;
+    $newData = [];
+    foreach($data as $term) {
+      $term[3] = self::findTermReference($term, 0);
+      $newData[] = $term;
+    }
+    $this->data = $newData;
   }
 
   //Создаёт материал в разделе Глоссарий
-  public static function createGlossaryMaterial($alias, $name) {
-    $hasMaterial = count(self::$glossaryCatalog->getMaterials()->where("alias='$alias'"));
+  protected function createGlossaryMaterial($alias, $name, $content) {
+    $hasMaterial = count($this->glossaryCatalog->getMaterials()->where("alias='$alias'"));
+    
 
     if(!$hasMaterial) {
-      $page = self::$glossaryCatalog->createMaterial();
+      $page = $this->glossaryCatalog->createMaterial();
       $page->setFields([
         'alias'   => $alias,
         'publish' => true,
         'autor'   => 'admin',
+        'text'    => $content,
         'name'    => $name
       ]);
       $page->save();
+    } else {
+      $material = $this->glossaryCatalog->getMaterialByAlias($alias);
+      $this->updatePageContent($material, $name, $content);
     }
   }
 
-  //Получает данные из бд и приводит к необходимому виду
-  protected function getData() {
+  // protected static function getTermByName($name) {
+  //   self::getData();
+  //   $term = array_filter(self::$data, fn($nm) => $nm[0] === $name)[0];
+  //   return $term;
+  // }
+
+  protected function getTermById($id) {
     $dataFromDB = include __DIR__ . '/../../g_data.php';
+    $term = array_filter($dataFromDB, function($data) use($id) {
+      return (int)$data['id'] === $id;
+    });
+    return array_values($term)[0];
+  }
+
+  //Получает данные из бд (и приводит к необходимому виду)
+  protected function getData($dataType = 1) {
+    $dataFromDB = include __DIR__ . '/../../g_data.php';
+
+    if($dataType !== 1)
+      return $dataFromDB;
 
     $data = array_reduce($dataFromDB, function($dataArray, $term) {
       $fields = [];
@@ -121,12 +227,12 @@ class Glossary{
       return $dataArray;
     }, []);
 
-    self::$data = $data;
+    return $data;
   }
 
   //Получаем алфавит, на основании существующих терминов
   protected function getAlphabet() {
-    $data = self::$data;
+    $data = $this->data;
     $alphabet = array_unique(array_map(
       function($term) { 
         return mb_strtoupper(mb_substr($term[0], 0, 1));
@@ -139,8 +245,8 @@ class Glossary{
 
   //Получает структуру главной страницы глоссария в виде ассоциативного массива
   protected function getDataStruct() {
-    $data = self::$data;
-    $alphabet = self::getAlphabet();
+    $data = $this->data;
+    $alphabet = $this->getAlphabet();
 
     $dataStruct = array_reduce($alphabet, 
       function($struct, $char) use ($data) {
@@ -158,17 +264,20 @@ class Glossary{
 
   //Создаёт разметку главной страницы глоссария
   protected function createGlossaryContent() {
-    $struct = self::getDataStruct();
+    $struct = $this->struct;
 
-    $content = '';
+    $dataForJs = json_encode($this->createDataForJS($this->data));
+    $dataContainer = "<div id='glossary-data' style='display: none;' data-glossary='$dataForJs'></div>";
+
+    $content = $dataContainer;
 
     foreach($struct as $char => $terms) {
 
       $charTerms = '<ul style="margin-bottom: 30px;">';
 
       $charTerms .= array_reduce($terms, function($schema, $term) {
-        $link = mb_strtolower($term[0]);
-        $schema .= "<li><a href='/glossary/$link'>$term[0]</a></li>";
+        $link = $this->toAlias($term[0]);
+        $schema .= "<li><a title='Описание термина $term[0]' href='/glossary/$link'>$term[0]</a></li>";
         return $schema;
       },'');
 
@@ -184,18 +293,19 @@ class Glossary{
 
   //Создаёт материалы полученных из бд терминов и наполняет их контентом
   public function initTermsPages() {
-    $data = self::$data;
+    $data = $this->data;
 
     foreach($data as $termData) {
-      $hasMaterial = count(self::$glossaryCatalog->getMaterials()->where("alias='$termData[0]'"));
+      $alias = $this->toAlias($termData[0]);
+      $hasMaterial = count($this->glossaryCatalog->getMaterials()->where("alias='$alias'"));
       if(!$hasMaterial) {
-        self::createTermPage($termData);
+        $this->createTermPage($termData);
       }
     }
   }
 
   //Обновляет контент в переданном материале
-  public static function updatePageContent($material, $name, $content) {
+  protected function updatePageContent($material, $name, $content) {
     $material->setFields([
       'text' => $content,
       'name' => $name
@@ -204,16 +314,10 @@ class Glossary{
   }
 
   //Создаёт материал термина и наполняет контентом, по переданным данным
-  protected function createTermPage($termData) {
-
-    $alias = mb_strtolower($termData[0]);
-
-    self::createGlossaryMaterial($alias, $termData[0]);
-
-    $material = self::$glossaryCatalog->getMaterialByAlias($alias);
-    $content = self::createTermPageContent($termData);
-
-    self::updatePageContent($material, $termData[0], $content);
+  public function createTermPage($termData) {
+    $alias = $this->toAlias($termData[0]);
+    $content = $this->createTermPageContent($termData);
+    $this->createGlossaryMaterial($alias, $termData[0], $content);
   }
 
   //Собирает разметку материала термина, по переданным данным
@@ -223,19 +327,19 @@ class Glossary{
     $synonymsArray = mb_split(", ?", $termData[2]);
     $synonyms = array_reduce($synonymsArray, function($list, $synonym) {
       $list .= strlen($list) === 0 ? '' : ', ';
-      $list .= self::getSynonymSchema($synonym);
+      $list .= $this->getSynonymSchema($synonym);
       return $list;      
     }, "");
 
     $linksArray = mb_split(", ?", $termData[3]);      
     $links = array_reduce($linksArray, function($list, $link) {
       $list .= strlen($list) === 0 ? '' : ', ';
-      $list .= self::getLinkSchema($link);
+      $list .= $this->getLinkSchema($link);
 
       return $list;
     }, "");
     
-    $content = self::getTermPageSchema($specification, $synonyms, $links);
+    $content = $this->getTermPageSchema($specification, $synonyms, $links);
 
     return $content;
   }
@@ -252,13 +356,13 @@ class Glossary{
 
   //Разметка для синонимов
   protected function getSynonymSchema($synonym) {
-    $isHavePage = count(array_filter(self::$data, 
-      fn($term) => mb_strtoupper($term[0]) === mb_strtoupper($synonym)));
+    $synonymAlias = $this->toAlias($synonym);
+    $isHavePage = count(array_filter($this->data, 
+      fn($term) => $this->toAlias($term[0]) === $synonymAlias));
   
     if($isHavePage) {
-      $link = mb_strtolower($synonym);
-      $href = "/glossary/$link";
-      return "<a href='$href'>$synonym</a>";
+      $href = "/glossary/$synonymAlias";
+      return "<a title='Описание термина $synonym' href='$href'>$synonym</a>";
     }
   
     return $synonym;
@@ -268,17 +372,17 @@ class Glossary{
   protected function getLinkSchema($link) {
     if(strlen($link) !== 0) {
       $linkData = mb_split("\|{3}", $link);
-      return "<a href='$linkData[1]'>$linkData[0]</a>";
+      return "<a title='$linkData[0]' href='$linkData[1]'>$linkData[0]</a>";
     }
     return '';
   }
 
-  public function getLinkData($link) {
+  protected function getLinkData($link) {
     $linkData = mb_split("\|{3}", $link);
     return ['title' => $linkData[0], 'link' => $linkData[1]];
   }
 
-  public function getLinksData($links) {
+  protected function getLinksData($links) {
     $linksArr = mb_split(", ?", $links);
     $data = array_reduce($linksArr, function($dt, $linkData) {
       $dt[] = self::getLinkData($linkData);
@@ -287,24 +391,29 @@ class Glossary{
     return $data;
   }
 
-  public static function findTermReference($term) {
-    $termData = self::toData($term);
-    $catalogs = self::$dir->getSubs();
+  protected function findTermReference($term, $dataType = 1) {
+    if($dataType === 1)
+      $termData = $this->toData($term);
+    else
+      $termData = $term;
+
+    $catalogs = $this->mainCatalog->getSubs();
     $data = array_reduce($catalogs, function($cur, $id) use($termData) {
 
-      $catalog = self::$dir->getById($id);
+      $catalog = $this->mainCatalog->getById($id);
       $isCatalogHidden = $catalog->isHidden();
+      $isParentHidden = $catalog->getParent()->isHidden();
 
-      if(!$isCatalogHidden) {
+      if(!$isCatalogHidden && !$isParentHidden) {
         if($catalog['alias'] !== 'glossary') {
-          $materials = self::$dir->getById($id)->getMaterials();
+          $materials = $this->mainCatalog->getById($id)->getMaterials();
 
           for($i = 0; $i < count($materials); $i++) {
 
             $html = $materials[$i]['text'];
             $onlyText = mb_split("</?.*?>", $html);
             $onlyText = implode("", $onlyText);
-            $words = mb_split("\W+", $onlyText);
+            $words = mb_split("[^A-Za-zа-яА-ЯЁё-]", $onlyText);
             $isHaveTerm = count(array_filter($words, 
               fn($word) => mb_strtolower($word) === mb_strtolower($termData[0])));
 
@@ -322,5 +431,13 @@ class Glossary{
 
     return implode(", ", $data);
   }
-
+/*
+  public function toFile($data, $var) {
+    if($var) {
+      file_put_contents(dirname(__FILE__).'/../../test.php',"<?php\nreturn " . var_export($data, true) . ";");
+    } else {
+      file_put_contents(dirname(__FILE__).'/../../test.php',"<?php\nreturn " . $data . ";");
+    } 
+  }
+*/
 }

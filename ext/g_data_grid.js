@@ -4,10 +4,9 @@ Ext.define('Plugin.glossary.g_data_grid', {
 
     columns: [
         {header: "ID", width: 50, dataIndex: 'id'},
-        {flex: 1, header: _('Термин'), width: 100, dataIndex: 'term'},
+        {header: _('Термин'), width: 150, dataIndex: 'term'},
         {flex: 1, header: _('Определение'), width: 450, dataIndex: 'specification'},
-        {flex: 1, header: _('Синонимы'), width: 250, dataIndex: 'synonyms'},
-        {flex: 1, header: _('Ссылки'), width: 250, dataIndex: 'links'}
+        {flex: 1, header: _('Синонимы'), width: 250, dataIndex: 'synonyms'}
     ],
 
     selModel: {
@@ -18,6 +17,7 @@ Ext.define('Plugin.glossary.g_data_grid', {
                     var hs = sm.hasSelection();
                     Ext.getCmp('tb_term_edit').setDisabled(!hs);
                     Ext.getCmp('tb_term_delete').setDisabled(!hs);
+                    Ext.getCmp('tb_term_reload').setDisabled(!hs);
                 },
                 scope: this
             }
@@ -29,7 +29,7 @@ Ext.define('Plugin.glossary.g_data_grid', {
         this.store = new Ext.data.JsonStore({
             autoDestroy: true,
             remoteSort: true,
-            fields: ['term', 'specification', 'synonyms', 'links'],
+            fields: ['term', 'specification', 'synonyms'],
             sortInfo: {field: "ID", direction: "ASC"},
             proxy: {
                 type: 'ajax',
@@ -62,7 +62,7 @@ Ext.define('Plugin.glossary.g_data_grid', {
                         this.edit(this.getSelectionModel().getSelection()[0].getId());
                     },
                     scope: this
-                },
+                }, '-',
                 {
                     id: 'tb_term_delete',
                     disabled: true,
@@ -73,6 +73,16 @@ Ext.define('Plugin.glossary.g_data_grid', {
                     },
                     scope: this
                 }, '-',
+                {
+                    id: 'tb_term_reload',
+                    disabled: true,                    
+                    iconCls: 'icon-reload',
+                    tooltip: _('Обновить\u00A0Глоссарий'),
+                    handler: function () {
+                        this.call('reload_term');
+                    },
+                    scope: this
+                },
             ]
         });
 

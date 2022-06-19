@@ -5,7 +5,7 @@ Ext.define('Plugin.glossary.g_data_props', {
     closeAction: 'hide',
     title: '',
     width: 650,
-    height: 300,
+    height: 180,
     layout: 'vbox',
     modal: true,
     resizable: false,
@@ -22,7 +22,7 @@ Ext.define('Plugin.glossary.g_data_props', {
             border: false,
             activeTab: 0,
             bodyStyle: 'background: none',
-            height: 200,
+            height: 130,
             defaults: {bodyStyle: 'background:none; padding:5px'},
             items: [{
                 title: _('Термин'),
@@ -41,10 +41,6 @@ Ext.define('Plugin.glossary.g_data_props', {
                     }, {
                         fieldLabel: _('Синонимы'),
                         name: 'synonyms',
-                        allowBlank: true
-                    }, {
-                        fieldLabel: _('Ссылки'),
-                        name: 'links',
                         allowBlank: true
                     },
                 ]
