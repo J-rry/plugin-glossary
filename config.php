@@ -15,4 +15,4 @@ if ( $this->getBo() && $this->getUser() && $this->getUser()->isAdmin() )
     ));
     
 }
-\Cetera\Application::getInstance()->addScript('/cms/plugins/glossary/ext/js/script.js');
+\Cetera\Application::getInstance()->addScript('/cms/plugins/glossary/js/script.js');
