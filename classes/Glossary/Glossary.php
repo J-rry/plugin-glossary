@@ -142,7 +142,8 @@ class Glossary{
 
     $formatedTerm = $this->toData($term);
     $this->createTermPage($formatedTerm);
-
+    
+    return true;
   }
   public function deleteTerm($id) {
     $termData = $this->getTermById($id);
@@ -413,11 +414,10 @@ class Glossary{
             $html = $materials[$i]['text'];
             $onlyText = mb_split("</?.*?>", $html);
             $onlyText = implode("", $onlyText);
-            $words = mb_split("[^A-Za-zа-яА-ЯЁё-]", $onlyText);
-            $isHaveTerm = count(array_filter($words, 
-              fn($word) => mb_strtolower($word) === mb_strtolower($termData[0])));
+            $regExp = '/([^A-Za-zа-яА-ЯЁё\.-]' . $termData[0] . '$|^' . $termData[0] . '[^A-Za-zа-яА-ЯЁё\.-]|[^A-Za-zа-яА-ЯЁё\.-]'. $termData[0] . '[^A-Za-zа-яА-ЯЁё-])/ui';
+            $isHaveTerm = preg_match($regExp, $onlyText);
 
-            if($isHaveTerm) {
+            if($isHaveTerm === 1) {
               $links[] = $materials[$i]['name'] . "|||" . $materials[$i]->getUrl();
             }
           }

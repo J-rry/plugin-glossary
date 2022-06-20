@@ -27,14 +27,6 @@ if ($action == 'delete_term') {
 if ($action == 'save_term') {
 
 	$query = 'glossary_data SET term=?, specification=?, synonyms=?, links=?';
-        
-    if ($id) 
-        $query = 'UPDATE ' . $query . ' WHERE id=' . $id;
-    else 
-        $query = 'INSERT INTO ' . $query;
-    
-    $application->getConn()->executeQuery($query, array($_POST['term'], $_POST['specification'], $_POST['synonyms'], ''));
-    if (!$id) $id = $application->getConn()->lastInsertId();
 
     $term = array(
         'id' => (string)$id, 
@@ -44,9 +36,18 @@ if ($action == 'save_term') {
         'links' => ''
     );
 
-    $glossary->createNewTerm($term);
-            
-    $res['success'] = true;
+    if($glossary->createNewTerm($term)) {
+        if ($id) 
+        $query = 'UPDATE ' . $query . ' WHERE id=' . $id;
+        else 
+            $query = 'INSERT INTO ' . $query;
+        
+        $application->getConn()->executeQuery($query, array($_POST['term'], $_POST['specification'], $_POST['synonyms'], ''));
+        if (!$id) $id = $application->getConn()->lastInsertId();
+                
+        $res['success'] = true;
+    }
+    
 }
 
 if ($action == 'reload_term') {

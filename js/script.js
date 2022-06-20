@@ -83,8 +83,26 @@ document.addEventListener('DOMContentLoaded', function () {
       getElementByTerm(term) {
         return this.glossary.find((element) => element.getTerm().toLowerCase() === term.toLowerCase()) || null;
       }
+      getTermsList() {
+        return this.glossary.map(data => data.getTerm());
+      }
+      otherTermsContainsTheTerm(term2) {
+        return this.getTermsList().filter(term1 => {
+          if(term1 === term2) {
+            return false;
+          }
+          const regTerm = regExpForWord(term2);
+          if(term1.search(regTerm) !== -1) {
+            return true;
+          } else {
+            return false;
+          }
+          
+        });
+      }
       //Добавить термину html-обёртку(в type указывается тип обёртки)
       setTermWrappByType(term, number = 1, type = 2) {
+        console.log(term);
         const alias = this.getElementByTerm(term).getAlias();
         const specification = this.getElementByTerm(term).getSpecification();
         const link = `/glossary/${alias}`;
@@ -98,6 +116,18 @@ document.addEventListener('DOMContentLoaded', function () {
             return `<abbr title="${specification}">${term}</abbr><sup>[<a href="${link}" title="${term}">${number}</a>]</sup>`;
         }
       }
+    }
+
+    function regExpForWord(word) {
+      return new RegExp("((?<=[^A-Za-zа-яА-ЯЁё\.-]+)" + word + "(?=$)|(?<=^)" + word + "(?=[^A-Za-zа-яА-ЯЁё\.-]+)|(?<=[^A-Za-zа-яА-ЯЁё\.-]+)" + word + "(?=[^A-Za-zа-яА-ЯЁё-]+))", "ui");
+    }
+
+    function repeatStr(str, count) {
+      let result = '';
+      for(let i = 0; i < count; i++) {
+        result += str;
+      }
+      return result;
     }
 
     function glossaryInit (data) {
@@ -114,10 +144,11 @@ document.addEventListener('DOMContentLoaded', function () {
         glossary.addTerm(new Term(term[0], term[1], term[2], term[3], term[4]));
       });
 
+      console.log(glossary.list());
       const wrapAllTermsOnPage = () => {
 
-        $isAtLeastOneTermFinded = false;
-        $termsOnPageCount = 0;
+        let isAtLeastOneTermFinded = false;
+        let termsOnPageCount = 0;
         //Массив, в котором будут содержаться все найденные текстовые ноды, в которых были найдены термины.
         //А также ндополнительная информация для последующего "оборачивания"
         const content = [];
@@ -139,9 +170,59 @@ document.addEventListener('DOMContentLoaded', function () {
                 //Проверяем, не является ли родительская нода ссылкой
                 if(node.parentNode.nodeName !== "A") {
                   //Массив всех слов в текстовой ноде
-                  const reg = new RegExp("[^A-Za-zа-яА-ЯЁё-]", "u");
-                  const wordsInNode = node.textContent.trim().split(reg);
-                  //console.log(wordsInNode);
+                  //const reg = new RegExp("[^A-Za-zа-яА-ЯЁё-]", "u");
+                  //const wordsInNode = node.textContent.trim().split(reg);
+                  //const findedIndex = node.textContent.indexOf()
+
+                  let newNode = node.textContent;
+                  let cutNode = newNode;
+                  glossary.getTermsList().forEach(term => {
+                    const regTerm = regExpForWord(term);
+                    const index = cutNode.search(regTerm);
+                    if(index === -1){
+                      return;
+                    }
+                    if(!glossary.getElementByTerm(term).isFinded()) {
+                      const otherTermsContainsTerm = glossary.otherTermsContainsTheTerm(term);
+                      let wrappedTerm;
+                      if(otherTermsContainsTerm.length === 0) {
+                        glossary.getElementByTerm(term).termFinded();
+                        isAtLeastOneTermFinded = true;
+                        wrappedTerm = glossary.setTermWrappByType(newNode.slice(index, index + term.length));
+                        newNode = newNode.slice(0, index) + wrappedTerm + newNode.slice(index + term.length, newNode.length);
+                      } else {
+                        let cutNode = newNode;
+                        otherTermsContainsTerm.forEach(containsTerm => {
+                          // if(glossary.getElementByTerm(containsTerm).isFinded()) {
+                          //   containsTerm = glossary.setTermWrappByType(containsTerm);
+                          // }
+                          cutNode = cutNode.split(containsTerm);
+                          cutNode = cutNode.join(repeatStr('|', containsTerm.length));
+                        });    
+                        
+                        const newIndex = cutNode.search(regExpForWord(term))
+                        if(newIndex !== -1) {
+                          glossary.getElementByTerm(term).termFinded();  
+                          isAtLeastOneTermFinded = true;
+                          // console.log(cutNode);
+                          wrappedTerm = glossary.setTermWrappByType(newNode.slice(newIndex, newIndex + term.length));
+                          newNode = newNode.slice(0, newIndex) + wrappedTerm + newNode.slice(newIndex + term.length, newNode.length); 
+                        }
+                      }
+                      cutNode = newNode.split(wrappedTerm);
+                      cutNode = cutNode.join(repeatStr('|', wrappedTerm.length));
+                    }
+                    console.log(newNode);
+                  });
+                  if(newNode.length !== node.textContent.length) {
+                    content.push({
+                      floor: floor, //уровень углубления ноды
+                      node: node.parentNode, //Родительская нода
+                      old: node.textContent, //Старое содержимое ноды
+                      new: newNode, //Новое содержимое ноды
+                    });
+                  }
+                  /*
                   //Массив найденных терминов в ноде
                   const containsTerms = wordsInNode.filter((word) => {
                     if(glossary.getElementByTerm(word)) {
@@ -160,8 +241,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     let newTextSplited = [];
 
                     containsTerms.forEach((term, id) => {
-                      $termsOnPageCount++;
-                      const wrappedTerm = glossary.setTermWrappByType(term, $termsOnPageCount);
+                      termsOnPageCount++;
+                      const wrappedTerm = glossary.setTermWrappByType(term, termsOnPageCount);
 
                       $isAtLeastOneTermFinded = true;
                       //glossary.getElementByTerm(term).termFinded();
@@ -202,6 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
                       new: nodeNewText, //Новое содержимое ноды
                     });
                   }
+                  */
                 }
               }
             }
@@ -210,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         findTextNode(widget);
 
-        if ($isAtLeastOneTermFinded) {
+        if (isAtLeastOneTermFinded) {
           //Сортируем замены, от самых глубоких
           content.sort((el1, el2) => el2.floor - el1.floor);
 
@@ -225,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         }
 
-        return $isAtLeastOneTermFinded;
+        return isAtLeastOneTermFinded;
       };
 
       wrapAllTermsOnPage();
