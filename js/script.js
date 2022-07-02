@@ -1,234 +1,203 @@
 document.addEventListener('DOMContentLoaded', function () {
+  const widget = document.querySelector(".x-cetera-widget");
+  const isContainGlossaryWidgets = widget.innerHTML.indexOf('class="widget-glossary-term"') !== -1 
+        || widget.innerHTML.indexOf('class="widget-glossary"') !== -1;
+  if(!isContainGlossaryWidgets) {
+    //Полифилы
+    addPolyfills();
 
-  const pathname = document.location.pathname;
-  const isGlossarySection = pathname.split('/glossary').length > 1;
-  if(!isGlossarySection) {
-    const widget = document.querySelector(".x-cetera-widget");
-    const dataGetType = 'parse';
-    let glossaryData = "/glossary/cms/plugins/glossary/g_data.json";
+    let glossaryDataURL = "/cms/plugins/glossary/g_data.json";
 
-    if(dataGetType === 'parse') {
-      glossaryData = "/glossary/";
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('GET', glossaryDataURL);
+    xhr.onload = function() {
+      glossaryInit(JSON.parse(xhr.response));
     }
+    xhr.send();
 
-    fetch(glossaryData)
-      .then(response => response.text())
-      .then(data => glossaryInit(data))
-      .catch((err) => console.log(err));
+    function Term (term, specification, link) {
+      this.term = term;
+      this.specification = specification;
+      this.link = link;
+      this.isFinded = false;
+      this.containsTerms = [];
 
-    //Класс Термина
-    class Term {
-      constructor(term, specification, synonyms = '', links = '', alias = '', finded = false) {
-        this.term = term;
-        this.specification = specification;
-        this.synonyms = synonyms;
-        this.links = links;
-        this.alias = alias;
-        this.finded = finded;
-      }
-      getAlias() {
-        return this.alias;
-      }
-      //Метод добавления синонимов
-      addSynonym(...synonym) {
-        this.synonyms = [...this.synonyms, ...synonym];
-      }
-      //Метод добавления ссылки
-      addLink(...link) {
-        this.links = [...this.links, ...link];
-      }
-      //Получить имя термина
-      getTerm() {
-        return this.term;
-      }
-      //Получить описание термина
-      getSpecification() {
-        return this.specification;
-      }
-      //Получить синонимы термина
-      getSynonyms() {
-        return this.synonyms;
-      }
-      //Получить ссылки на термин
-      getLinks() {
-        return this.links;
-      }
-
-      isFinded() {
-        return this.finded;
-      }
-      termFinded() {
-        this.finded = true;
+      this.finded = function () {
+        this.isFinded = true;
       }
     }
 
-    //Класс глоссария
-    class Glossary {
-      constructor(glossary = []) {
-        this.glossary = glossary;
-      }
-      //Добавление нового термина(можно сразу несколько)
-      addTerm(...term) {
-        this.glossary = [...this.glossary, ...term];
-      }
-      //Получить Список терминов
-      list() {
-        return this.glossary;
-      }
-      //Получить термин по id в глассарии
-      getElementById(id) {
-        return this.glossary[id] || null;
+    //конструктор глоссария
+    function Glossary () {
+      this.glossary = [];
+
+      //Добавление нового термина
+      this.addTerm = function(term) {
+        this.glossary = this.glossary.concat(term);
       }
       //Получить термин по его имени
-      getElementByTerm(term) {
-        return this.glossary.find((element) => element.getTerm().toLowerCase() === term.toLowerCase()) || null;
+      this.getTermByName = function(name) {
+        return this.glossary.find(function(element) {
+          return element.term.toLowerCase() === name.toLowerCase()
+        }) || null;
       }
-      getTermsList() {
-        return this.glossary.map(data => data.getTerm());
-      }
-      otherTermsContainsTheTerm(term2) {
-        return this.getTermsList().filter(term1 => {
-          if(term1 === term2) {
-            return false;
-          }
-          const regTerm = regExpForWord(term2);
-          if(term1.search(regTerm) !== -1) {
-            return true;
-          } else {
-            return false;
-          }
-          
+      //Получить список терминов
+      this.getTermsList = function() {
+        return this.glossary.map(function(data) {
+          return data.term
         });
       }
-      //Добавить термину html-обёртку(в type указывается тип обёртки)
-      setTermWrappByType(term, number = 1, type = 2) {
-        console.log(term);
-        const alias = this.getElementByTerm(term).getAlias();
-        const specification = this.getElementByTerm(term).getSpecification();
-        const link = `/glossary/${alias}`;
-
-        switch (type) {
-          case 1:
-            return `<abbr title="${specification}">${term}</abbr>`;
-          case 2:
-            return `<a href='${link}' title='${specification}'>${term}</a>`;
-          case 3:
-            return `<abbr title="${specification}">${term}</abbr><sup>[<a href="${link}" title="${term}">${number}</a>]</sup>`;
+      //Определить массив с терминами, которые содержат в себе имя термина каждому термину
+      this.otherTermsContainsTerm = function() {
+        var that = this;
+        this.glossary.forEach(function(termData) {
+          const containsTerms = that.getTermsList().filter(function(term) {
+            if(term === termData.term) {
+              return false;
+            }
+            const regTerm = regExpForWord(termData.term);
+            return term.search(regTerm) !== -1; 
+          });
+          termData.containsTerms = containsTerms;
+        });
+      }
+      //Добавить термину html-обёртку
+      this.setTermWrappByType = function(term) {
+        const specification = this.getTermByName(term).specification;
+        const link = this.getTermByName(term).link;
+        if(link === null) {
+          return "<abbr title='" + specification + "'>" + term + "</abbr>";
+        } else {
+          return "<a href='" + link + "' title='" + specification + "'>" + term + "</a>";
         }
       }
     }
 
     function regExpForWord(word) {
-      return new RegExp("((?<=[^A-Za-zа-яА-ЯЁё\.-]+)" + word + "(?=$)|(?<=^)" + word + "(?=[^A-Za-zа-яА-ЯЁё-]+)|(?<=[^A-Za-zа-яА-ЯЁё\.-]+)" + word + "(?=[^A-Za-zа-яА-ЯЁё-]+))", "ui");
+      return new RegExp('([^A-Za-zа-яА-ЯЁё\.-]' + word + '$|^' + word + '[^A-Za-zа-яА-ЯЁё\.-]|[^A-Za-zа-яА-ЯЁё\.-]'+ word + '[^A-Za-zа-яА-ЯЁё-]|^' + word + '$)', "i");
+      //return new RegExp("((?<=[^a-zа-яА-ЯЁё\.-]+)" + word + "(?=$)|(?<=^)" + word + "(?=[^a-zа-яА-ЯЁё-]+)|(?<=[^a-zа-яА-ЯЁё\.-]+)" + word + "(?=[^a-zа-яА-ЯЁё-]+))", "ui");
     }
 
-    function repeatStr(str, count) {
-      let result = '';
-      for(let i = 0; i < count; i++) {
-        result += str;
+    function addStubs(text, item) {
+      text = text.split(item);
+      text = text.join('|'.repeat(item.length));
+      return text;
+    }
+
+    function glossaryInit(data) {
+      if(data.length === 0) {
+        return;
       }
-      return result;
-    }
 
-    function glossaryInit (data) {
       //Создаём новый глоссарий
       const glossary = new Glossary();
 
-      if(dataGetType === 'parse') {
-        const parseData = data.match(/(?<=data-glossary=)'.*'/)[0];
-        data = JSON.parse(parseData.slice(1, -1));
-      }
-
       //Наполняем глоссарий
-      data.forEach(term => {
-        glossary.addTerm(new Term(term[0], term[1], term[2], term[3], term[4]));
-      });
+      const isGlossaryPageExist = data[0].length === 3;
+      if(isGlossaryPageExist) {
+        data.forEach(function(term) {
+          glossary.addTerm(new Term(term[0], term[1], term[2]));
+        });
+      } else {
+        data.forEach(function(term) {
+          glossary.addTerm(new Term(term[0], term[1], null));
+        });
+      }
+      glossary.otherTermsContainsTerm();
 
-      console.log(glossary.list());
-      const wrapAllTermsOnPage = () => {
-
-        let isAtLeastOneTermFinded = false;
-        // let termsOnPageCount = 0;
+      function wrapAllTermsOnPage() {
         //Массив, в котором будут содержаться все найденные текстовые ноды, в которых были найдены термины.
         //А также ндополнительная информация для последующего "оборачивания"
         const content = [];
-        //Уровень углублённости ноды
-        let floor = 0;
+        var isAtLeastOneTermFinded = false;
 
         //Основная функция, реализующая поиск текстовых нод и терминов внутри
-        const findTextNode = (elem, i = 0) => {
-          elem.childNodes.forEach((node) => {
+        function findTextNode(elem, floor) {
+          elem.childNodes.forEach(function(node) {
             if (node.children) {
-              i++;
-              floor = i;
-              findTextNode(node, i);
-              i--;
-            } else {
-              //Проверяем, текстовая ли нода
-              //Проверяем, является ли нода текстовым содержимым, чтобы отсечь элементы разметки(табуляцию и т п)
-              if (node.nodeName === "#text" && node.textContent.trim().length > 0) {
-                //Проверяем, не является ли родительская нода ссылкой
-                if(node.parentNode.nodeName !== "A") {
-                  let newNode = node.textContent;
-                  let cutNode = newNode;
-                  glossary.getTermsList().forEach(term => {
-                    const regTerm = regExpForWord(term);
-                    const index = cutNode.search(regTerm);
-                    if(index === -1){
+              floor++;
+              findTextNode(node, floor);
+              floor--;
+              return;
+            }
+            //Проверяем, текстовая ли нода
+            //Проверяем, является ли нода текстовым содержимым, чтобы отсечь элементы разметки(табуляцию и т п)
+            if (node.nodeName === "#text" && node.textContent.trim().length > 0) {
+              //Проверяем, не является ли родительская нода ссылкой
+              if(node.parentNode.nodeName !== "A")  {
+
+                let newNode = node.textContent;
+                let cutNode = newNode;
+
+                glossary.getTermsList().forEach(function(term) {
+                  
+                  const regTerm = regExpForWord(term);
+                  let index = cutNode.search(regTerm);
+
+                  if(index === -1){
+                    return;
+                  }
+                  if(index !== 0) {
+                    index++;
+                  }
+                  
+                  if(!glossary.getTermByName(term).isFinded) {
+
+                    const otherTermsContainsTerm = glossary.getTermByName(term).containsTerms;
+                    let wrappedTerm;
+
+                    if(otherTermsContainsTerm.length === 0) {
+                      glossary.getTermByName(term).finded();
+                      wrappedTerm = glossary.setTermWrappByType(newNode.slice(index, index + term.length));
+                      newNode = newNode.slice(0, index) + wrappedTerm + newNode.slice(index + term.length, newNode.length);
+                      cutNode = addStubs(newNode, wrappedTerm);
                       return;
                     }
-                    if(!glossary.getElementByTerm(term).isFinded()) {
-                      const otherTermsContainsTerm = glossary.otherTermsContainsTheTerm(term);
-                      let wrappedTerm;
-                      if(otherTermsContainsTerm.length === 0) {
-                        glossary.getElementByTerm(term).termFinded();
-                        wrappedTerm = glossary.setTermWrappByType(newNode.slice(index, index + term.length));
-                        newNode = newNode.slice(0, index) + wrappedTerm + newNode.slice(index + term.length, newNode.length);
-                      } else {
-                        let subNode = newNode;
-                        otherTermsContainsTerm.forEach(containsTerm => {
-                          subNode = subNode.split(containsTerm);
-                          subNode = subNode.join(repeatStr('|', containsTerm.length));
-                        });    
-                        
-                        const newIndex = subNode.search(regExpForWord(term))
-                        if(newIndex !== -1) {
-                          glossary.getElementByTerm(term).termFinded();                                                  
-                          wrappedTerm = glossary.setTermWrappByType(newNode.slice(newIndex, newIndex + term.length));
-                          newNode = newNode.slice(0, newIndex) + wrappedTerm + newNode.slice(newIndex + term.length, newNode.length); 
-                        } else {  
-                          return; 
-                        }
+
+                    let subNode = newNode;
+
+                    otherTermsContainsTerm.forEach(function(containsTerm) {
+                      subNode = addStubs(subNode, containsTerm);
+                    });    
+                    
+                    let newIndex = subNode.search(regExpForWord(term))
+
+                    if(newIndex !== -1) {
+                      if(newIndex !== 0) {
+                        newIndex++;
                       }
-                      cutNode = newNode.split(wrappedTerm);
-                      cutNode = cutNode.join(repeatStr('|', wrappedTerm.length));
+                      glossary.getTermByName(term).finded();                                                  
+                      wrappedTerm = glossary.setTermWrappByType(newNode.slice(newIndex, newIndex + term.length));
+                      newNode = newNode.slice(0, newIndex) + wrappedTerm + newNode.slice(newIndex + term.length, newNode.length); 
+                      cutNode = addStubs(newNode, wrappedTerm);
                     }
-                  });
-                  if(newNode.length !== node.textContent.length) {
-                    isAtLeastOneTermFinded = true;    
-                    content.push({
-                      floor: floor, //уровень углубления ноды
-                      node: node.parentNode, //Родительская нода
-                      old: node.textContent, //Старое содержимое ноды
-                      new: newNode, //Новое содержимое ноды
-                    });
                   }
+                });
+                if(newNode.length !== node.textContent.length) {
+                  isAtLeastOneTermFinded = true;    
+                  content.push({
+                    floor: floor,          //уровень углубления ноды
+                    node: node.parentNode, //Родительская нода
+                    old: node.textContent, //Старое содержимое ноды
+                    new: newNode,          //Новое содержимое ноды
+                  });
                 }
               }
             }
           });
         };
 
-        findTextNode(widget);
+        findTextNode(widget, 0);
 
         if (isAtLeastOneTermFinded) {
           //Сортируем замены, от самых глубоких
-          content.sort((el1, el2) => el2.floor - el1.floor);
-
-          //console.log(content);
+          content.sort(function(el1, el2) {
+            return el2.floor - el1.floor
+          });
 
           //Производим замену старого содержимого нод, на новое
-          content.forEach((text) => {
+          content.forEach(function(text) {
             const nodeHTML = text.node.innerHTML;
             const inHTML = text.old.split('\u00A0');
             const oldHTML = inHTML.join('&nbsp;');
@@ -240,7 +209,80 @@ document.addEventListener('DOMContentLoaded', function () {
       };
 
       wrapAllTermsOnPage();
-      
+    }
+  }
+
+  //Полифилы
+  function addPolyfills() {
+    if (window.NodeList && !NodeList.prototype.forEach) {
+      NodeList.prototype.forEach = Array.prototype.forEach;
+    }
+    if (!Array.prototype.find) {
+      Object.defineProperty(Array.prototype, 'find', {
+        value: function(predicate) {
+          if (this == null) {
+            throw new TypeError('"this" is null or not defined');
+          }
+    
+          var o = Object(this);
+          var len = o.length >>> 0;
+  
+          if (typeof predicate !== 'function') {
+            throw new TypeError('predicate must be a function');
+          }
+  
+          var thisArg = arguments[1];
+          var k = 0;
+  
+          while (k < len) {
+            var kValue = o[k];
+            if (predicate.call(thisArg, kValue, k, o)) {
+              return kValue;
+            }
+            k++;
+          }
+    
+          return undefined;
+        },
+        configurable: true,
+        writable: true
+      });
+    }
+  
+    if (!String.prototype.repeat) {
+      String.prototype.repeat = function(count) {
+        'use strict';
+        if (this == null)
+          throw new TypeError('can\'t convert ' + this + ' to object');
+    
+        var str = '' + this;
+        count = +count;
+  
+        if (count != count)
+          count = 0;
+    
+        if (count < 0)
+          throw new RangeError('repeat count must be non-negative');
+    
+        if (count == Infinity)
+          throw new RangeError('repeat count must be less than infinity');
+    
+        count = Math.floor(count);
+        if (str.length == 0 || count == 0)
+          return '';
+  
+        if (str.length * count >= 1 << 28)
+          throw new RangeError('repeat count must not overflow maximum string size');
+    
+        var maxCount = str.length * count;
+        count = Math.floor(Math.log(count) / Math.log(2));
+        while (count) {
+          str += str;
+          count--;
+        }
+        str += str.substring(0, maxCount - str.length);
+        return str;
+      }
     }
   }
 });

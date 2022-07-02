@@ -1,0 +1,14 @@
+
+<div class="{{ widget.getParam('css_class') }}">
+
+	{% for m in widget.getParam('struct') %}
+		<h2>{{ m['char'] }}</h2>
+			<ul>
+			{% for n in m['data'] %}
+			<li><a href="{{ n['path'] }}" title="Описание термина {{ n['term'] }}">{{ n['term'] }}</a></li>
+			{% endfor %}
+		</ul>
+	{% endfor %}
+			  
+</div>
+

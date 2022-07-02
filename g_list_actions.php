@@ -16,12 +16,12 @@ $id = (int)$_POST['id'];
 
 if ($action == 'delete_term') {
 	
-	$query_del = 'DELETE FROM glossary_data WHERE id=?';
-	$application->getConn()->executeQuery($query_del, array($id));
+    if($glossary->deleteTerm($id)) {
+        $query_del = 'DELETE FROM glossary_data WHERE id=?';
+        $application->getConn()->executeQuery($query_del, array($id));
 
-    $glossary->deleteTerm($id);
-
-	$res['success'] = true;
+        $res['success'] = true;
+    }
 }
 
 if ($action == 'save_term') {
@@ -37,8 +37,8 @@ if ($action == 'save_term') {
     );
 
     if($glossary->createNewTerm($term)) {
-        if ($id) 
-        $query = 'UPDATE ' . $query . ' WHERE id=' . $id;
+        if($id) 
+            $query = 'UPDATE ' . $query . ' WHERE id=' . $id;
         else 
             $query = 'INSERT INTO ' . $query;
         

@@ -1,0 +1,19 @@
+
+<div class="{{ widget.getParam('css_class') }}">
+
+	<p class="h2">{{ widget.getParam('description') }}</p>
+
+	{% if widget.getParam('synonyms') != [] %}
+		<p class="h3"> Синонимы: 
+		{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{% if m['link'] != '' %}<a href="{{ m['link'] }}" title="Описание термина &#171;{{ m['term'] }}&#187">{{ m['term'] }}</a>{% else %}{{ m['term'] }}{% endif %}{% endfor %}
+		</p>
+	{% endif %}
+	
+	{% if widget.getParam('links') != [] %}
+		<p class="h3"> Ссылки: 
+		{% for m in widget.getParam('links') %}{{ m['separator'] }}<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>{% endfor %}
+		</p>
+	{% endif %}
+			  
+</div>
+
