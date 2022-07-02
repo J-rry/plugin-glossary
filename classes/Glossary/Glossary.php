@@ -127,17 +127,17 @@ class Glossary {
         return (int)$id === (int)$catalogId;
       }));
       if(!$isCatalogStillExist) {
-        $updateGlossaryMaterials =  array_filter($updateGlossaryMaterials, function($mat) use($materialId) {
+        $updateGlossaryMaterials = array_values(array_filter($updateGlossaryMaterials, function($mat) use($materialId) {
           return (int)$mat['material']['id'] !== (int)$materialId;
-        });
+        }));
         continue;
       }
 
       $isMaterialStillExist = count($this->mainCatalog->getById($catalogId)->getMaterials()->where("id='$materialId'"));
       if(!$isMaterialStillExist) {
-        $updateGlossaryMaterials =  array_filter($updateGlossaryMaterials, function($mat) use($materialId) {
+        $updateGlossaryMaterials =  array_values(array_filter($updateGlossaryMaterials, function($mat) use($materialId) {
           return (int)$mat['material']['id'] !== (int)$materialId;
-        });
+        }));
         $this->deleteTermCatalogByParentId($catalogId);
         continue;
       }
@@ -145,9 +145,9 @@ class Glossary {
       $isMaterialStillHaveGlossaryWidget = 
       mb_strpos($this->mainCatalog->getMaterialByID($materialId)['text'], '<cms action="widget" class="widget-Glossary" widgetname="Glossary"') !== false;
       if(!$isMaterialStillHaveGlossaryWidget) {
-        $updateGlossaryMaterials =  array_filter($updateGlossaryMaterials, function($mat) use($materialId) {
+        $updateGlossaryMaterials =  array_values(array_filter($updateGlossaryMaterials, function($mat) use($materialId) {
           return (int)$mat['material']['id'] !== (int)$materialId;
-        });
+        }));
         $this->deleteTermCatalogByParentId($catalogId);
         continue;
       }
