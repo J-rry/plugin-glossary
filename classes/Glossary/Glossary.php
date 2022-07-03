@@ -38,8 +38,8 @@ class Glossary {
     $glossaryCatalog = $this->glossaryCatalog;
 
     $existGlossaryMaterials = $this->glossaryMaterials;
-    $isGlossaryHaveNoMaterials = count($existGlossaryMaterials) === 0;
-    if(!$isGlossaryHaveNoMaterials) {
+    $isGlossaryHaveNotMaterials = count($existGlossaryMaterials) === 0;
+    if(!$isGlossaryHaveNotMaterials) {
       $glossaryCatalogId = $glossaryCatalog['id'];
       $isWidgetAlreadyExistInCatalog = count(array_filter($existGlossaryMaterials, function($widgetData) use($glossaryCatalogId) {
         return $widgetData['catalog']['id'] === $glossaryCatalogId;
@@ -53,8 +53,8 @@ class Glossary {
     $newData;
 
     for($i = 0; $i < count($materials); $i++) {
-      $isHaveGlossaryWidget = mb_strpos($materials[$i]['text'], '<cms action="widget" class="widget-Glossary" widgetname="Glossary"');
-      if($isHaveGlossaryWidget !== false) {
+      $isHaveGlossaryWidget = mb_strpos($materials[$i]['text'], '<cms action="widget" class="widget-Glossary" widgetname="Glossary"') !== false;
+      if($isHaveGlossaryWidget) {
         $newData = [
           'catalog' => [
             'id' => $glossaryCatalog['id'], 
@@ -87,12 +87,8 @@ class Glossary {
       $termsCatalog = $this->mainCatalog->getById($material['catalog']['id'])->findChildByAlias('terms');
       $this->termsCatalog = $termsCatalog;
       $alias = $this->toAlias($term['term']);
-      $isTermAlreadtyExists = count($termsCatalog->getMaterials()->where("alias='$alias'"));
       if(count($aliasUpdate)) {
         $termsCatalog->getMaterialByAlias($this->toAlias($aliasUpdate[0]['term']))->delete();
-      }
-      if($isTermAlreadtyExists) {
-        $termsCatalog->getMaterialByAlias($alias)->delete();
       }
       $formatedTerm = $this->toData($term); 
       $this->createTermPage($termsCatalog, $formatedTerm);
