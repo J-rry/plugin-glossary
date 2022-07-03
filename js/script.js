@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const widget = document.querySelector(".x-cetera-widget");
-  const isContainGlossaryWidgets = widget.innerHTML.indexOf('class="widget-glossary-term"') !== -1 
-        || widget.innerHTML.indexOf('class="widget-glossary"') !== -1;
+  const material = document.querySelector(".x-cetera-widget");
+  const materialHTML = material.innerHTML;
+  const isContainGlossaryWidgets = materialHTML.indexOf('class="widget-glossary-term"') !== -1 
+        || materialHTML.indexOf('class="widget-glossary"') !== -1;
   if(!isContainGlossaryWidgets) {
     //Полифилы
     addPolyfills();
@@ -90,17 +91,23 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      //Отсекаем часть терминов, которых нет на странице
+      const materialHTMLLower = materialHTML.toLocaleLowerCase();
+      const containsData = data.filter(function(termData) {
+        return materialHTMLLower.indexOf(termData[0].toLocaleLowerCase()) !== -1;
+      })
+
       //Создаём новый глоссарий
       const glossary = new Glossary();
 
       //Наполняем глоссарий
       const isGlossaryPageExist = data[0].length === 3;
       if(isGlossaryPageExist) {
-        data.forEach(function(term) {
+        containsData.forEach(function(term) {
           glossary.addTerm(new Term(term[0], term[1], term[2]));
         });
       } else {
-        data.forEach(function(term) {
+        containsData.forEach(function(term) {
           glossary.addTerm(new Term(term[0], term[1], null));
         });
       }
@@ -188,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         };
 
-        findTextNode(widget, 0);
+        findTextNode(material, 0);
 
         if (isAtLeastOneTermFinded) {
           //Сортируем замены, от самых глубоких
