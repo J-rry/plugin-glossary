@@ -128,6 +128,7 @@ class Glossary {
 
     $catalogsIds = $this->mainCatalog->getSubs();
     $updateGlossaryMaterials = $glossaryMaterials;
+    $this->initLinks();
 
     foreach($glossaryMaterials as $material) {
 
@@ -162,11 +163,9 @@ class Glossary {
         $this->deleteTermCatalogByParentId($catalogId);
         continue;
       }
-    
-      $this->deleteTermCatalogByParentId($catalogId);
 
-      $this->termsCatalog = $termsCatalog;
-      $this->initGlossary($this->mainCatalog->getMaterialByID($materialId));
+      $this->termsCatalog = $this->mainCatalog->getById($catalogId)->findChildByAlias('terms');
+      $this->initTermsPages($this->termsCatalog);
     }
 
     if(count($updateGlossaryMaterials) !== count($glossaryMaterials)) {
@@ -271,10 +270,10 @@ class Glossary {
 
     foreach($data as $termData) {
       $alias = $this->toAlias($termData[0]);
-      $hasMaterial = count($termsCatalog->getMaterials()->where("alias='$alias'"));
-      if(!$hasMaterial) {
+      //$hasMaterial = count($termsCatalog->getMaterials()->where("alias='$alias'"));
+      //if(!$hasMaterial) {
         $this->createTermPage($termsCatalog, $termData);
-      }
+      //}
     }
   }
 
