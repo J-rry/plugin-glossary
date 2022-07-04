@@ -43,7 +43,6 @@ class Glossary {
 
     $isMaterialExist = count($materialsWithoutAdded) !== count($glossaryMaterials);
     if(!$isPageHaveGlossaryWidget && $isMaterialExist) {
-      $this->toFile('test', $materialsWithoutAdded, true);
       $catalogId = $material->getCatalog()['id'];
       $this->deleteTermCatalogByParentId($catalogId);
       $this->toFile('glossary_materials', $materialsWithoutAdded, true);
@@ -77,7 +76,7 @@ class Glossary {
   }
 
   public function createNewTerm($term) {
-    $term['links'] = $this->findTermReference($term);
+    $term['links'] = $this->findTermReference($this->toData($term));
 
     $data = $this->getData(0);
     $aliasUpdate = array_values(array_filter($data, function($termData) use ($term) {
@@ -260,7 +259,7 @@ class Glossary {
     $data = $this->data;
     $newData = [];
     foreach($data as $term) {
-      $term[3] = $this->findTermReference($term, 0);
+      $term[3] = $this->findTermReference($term);
       $newData[] = $term;
     }
     $this->data = $newData;
@@ -429,55 +428,27 @@ class Glossary {
     return $linksData;
   }
 
-  protected function findTermReference($term, $dataType = 1) {
-    if($dataType === 1)
-      $termData = $this->toData($term);
-    else
-      $termData = $term;
-
-    //Находим id-ы материалов и каталогов терминов глоссария, чтобы отсечь их
-    $glossaryMaterials = $this->glossaryMaterials;
-    $termsCatalogsIds = array_reduce($glossaryMaterials, function($ids, $material) {
-      $termId = $this->mainCatalog->getById($material['catalog']['id'])->findChildByAlias('terms')['id'];
-      if($termId) {
-        $ids[] = $termId;
-      }
-      return $ids;
-    }, []);
-    $glossaryMaterialsIds = array_map(function($material) {
-      return $material['material']['id'];
-    }, $glossaryMaterials); 
+  protected function findTermReference($term) {
 
     $catalogs = $this->mainCatalog->getSubs();
-    $data = array_reduce($catalogs, function($links, $id) use($termData, $termsCatalogsIds, $glossaryMaterialsIds) {
-
+    $data = array_reduce($catalogs, function($links, $id) use($term) { 
       $catalog = $this->mainCatalog->getById($id);
-      $isCatalogHidden = $catalog->isHidden();
-      $isParentHidden = $catalog->getParent()->isHidden();
-
-      if(!$isCatalogHidden && !$isParentHidden) {
-        if(!in_array((int)$catalog['id'], $termsCatalogsIds)) {
-          $materials = $this->mainCatalog->getById($id)->getMaterials();
-
-          for($i = 0; $i < count($materials); $i++) {
-            if(!in_array($materials[$i]['id'], $glossaryMaterialsIds)) {
-              $html = $materials[$i]['text'];
-              $onlyText = mb_split("</?.*?>", $html);
-              $onlyText = implode("", $onlyText);
-              $regExp = '/([^a-zа-яА-ЯЁё\.-]' . $termData[0] . '$|^' . $termData[0] . '[^a-zа-яА-ЯЁё\.-]|[^a-zа-яА-ЯЁё\.-]'. $termData[0] . '[^a-zа-яА-ЯЁё-])/ui';
-              $isHaveTerm = preg_match($regExp, $onlyText);
-
-              if($isHaveTerm === 1) {
-                $links[] = ['title' => $materials[$i]['name'], 'link' => $materials[$i]->getUrl()];
-              }
-            }
+      if(!$catalog->isHidden() && !$catalog->getParent()->isHidden()) {
+        $materials = $catalog->getMaterials();
+        for($i = 0; $i < count($materials); $i++) {
+          $html = $materials[$i]['text'];
+          $onlyText = implode("", mb_split("</?.*?>", $html));
+          $regExp = '/([^a-zа-яА-ЯЁё\.-]' . $term[0] . '$|^' . $term[0] . '[^a-zа-яА-ЯЁё\.-]|[^a-zа-яА-ЯЁё\.-]'. $term[0] . '[^a-zа-яА-ЯЁё-])/ui';
+          $isHaveTerm = preg_match($regExp, $onlyText);
+    
+          if($isHaveTerm === 1) {
+            $links[] = ['title' => $materials[$i]['name'], 'link' => $materials[$i]->getUrl()];
           }
         }
       }
-
       return $links;
     }, []);
-
+    
     return $data;
   }
 }
