@@ -13,7 +13,7 @@ class Glossary {
   public function __construct() {
     $this->mainCatalog = \Cetera\Application::getInstance()->getServer();
     $this->data = $this->getData();
-    $this->glossaryMaterials = include dirname(__FILE__) . '/../../glossaty_materials.php';
+    $this->glossaryMaterials = include dirname(__FILE__) . '/../../glossary_materials.php';
   }
 
   public function initGlossary($glossaryCatalog) {
@@ -67,7 +67,7 @@ class Glossary {
         ];
 
         $existGlossaryMaterials[] = $newData;
-        $this->toFile('glossaty_materials', $existGlossaryMaterials, true);
+        $this->toFile('glossary_materials', $existGlossaryMaterials, true);
         return;
       }
     }
@@ -111,6 +111,11 @@ class Glossary {
 
   public function reloadGlossary() {
     $glossaryMaterials = $this->glossaryMaterials;
+
+    if(!count($glossaryMaterials)) {
+      return;
+    }
+
     $catalogsIds = $this->mainCatalog->getSubs();
     $updateGlossaryMaterials = $glossaryMaterials;
 
@@ -119,7 +124,7 @@ class Glossary {
       $catalogId = $material['catalog']['id'];
       $materialId = $material['material']['id'];
 
-      $isCatalogStillExist = count(array_filter($catalogsIds, function($id) use ($catalogId, $test) {
+      $isCatalogStillExist = count(array_filter($catalogsIds, function($id) use ($catalogId) {
         return (int)$id === (int)$catalogId;
       }));
       if(!$isCatalogStillExist) {
@@ -155,7 +160,15 @@ class Glossary {
     }
 
     if(count($updateGlossaryMaterials) !== count($glossaryMaterials)) {
-      $this->toFile('glossaty_materials', $updateGlossaryMaterials, true);
+      $this->toFile('glossary_materials', $updateGlossaryMaterials, true);
+    }
+  }
+
+  protected function deleteTermCatalogByParentId($catalogId) {
+    $termsCatalog = $this->mainCatalog->getById($catalogId)->findChildByAlias('terms');
+    $isTermCatalogStillExist = !empty($termsCatalog);
+    if($isTermCatalogStillExist) {
+      $termsCatalog->delete();
     }
   }
 
@@ -176,14 +189,6 @@ class Glossary {
     }
 
     return json_encode($newData);
-  }
-
-  protected function deleteTermCatalogByParentId($catalogId) {
-    $termsCatalog = $this->mainCatalog->getById($catalogId)->findChildByAlias('terms');
-    $isTermCatalogStillExist = !empty($termsCatalog);
-    if($isTermCatalogStillExist) {
-      $termsCatalog->delete();
-    }
   }
 
   public function getTermWidget($term) {
