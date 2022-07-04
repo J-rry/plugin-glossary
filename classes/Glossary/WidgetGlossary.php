@@ -15,10 +15,7 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
   public function __construct() {
     $glossary = new \Glossary\Glossary();
     $glossaryCatalog = \Cetera\Application::getInstance()->getCatalog();
-    $glossary->initGlossary($glossaryCatalog);
-    $glossary->addGlossaryMaterial();
-
-    $this->_params['struct'] = $glossary->createTemplateGlossaryData();
+    $this->_params['struct'] = $glossary->createTemplateGlossaryData($glossaryCatalog);
   }
 
 }
