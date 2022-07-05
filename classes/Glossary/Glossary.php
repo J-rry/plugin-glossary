@@ -270,10 +270,7 @@ class Glossary {
 
     foreach($data as $termData) {
       $alias = $this->toAlias($termData[0]);
-      //$hasMaterial = count($termsCatalog->getMaterials()->where("alias='$alias'"));
-      //if(!$hasMaterial) {
-        $this->createTermPage($termsCatalog, $termData);
-      //}
+      $this->createTermPage($termsCatalog, $termData);
     }
   }
 
