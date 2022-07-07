@@ -17,7 +17,6 @@ Ext.define('Plugin.glossary.g_data_grid', {
                     var hs = sm.hasSelection();
                     Ext.getCmp('tb_term_edit').setDisabled(!hs);
                     Ext.getCmp('tb_term_delete').setDisabled(!hs);
-                    Ext.getCmp('tb_term_reload').setDisabled(!hs);
                 },
                 scope: this
             }
@@ -72,17 +71,7 @@ Ext.define('Plugin.glossary.g_data_grid', {
                         this.delete_list();
                     },
                     scope: this
-                }, '-',
-                {
-                    id: 'tb_term_reload',
-                    disabled: true,                    
-                    iconCls: 'icon-reload',
-                    tooltip: _('Обновить\u00A0Глоссарий'),
-                    handler: function () {
-                        this.call('reload_term');
-                    },
-                    scope: this
-                },
+                }, 
             ]
         });
 

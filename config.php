@@ -5,9 +5,7 @@ $t->addTranslation(__DIR__.'/lang');
 $this->registerWidget(array(
     'name'    => 'Glossary',
     'class'   => '\\Glossary\\WidgetGlossary',
-    'describ' => $t->_('Глоссарий'),
-    'icon'    => '/cms/plugins/glossary/images/icon.gif',
-    'ui'      => 'Plugin.glossary.Widget',
+    'not_placeable' => true,
 ));
 
 $this->registerWidget(array(
@@ -31,10 +29,3 @@ if ( $this->getBo() && $this->getUser() && $this->getUser()->isAdmin() )
     
 }
 \Cetera\Application::getInstance()->addScript('/cms/plugins/glossary/js/script.js');
-\Cetera\Event::attach(EVENT_CORE_MATERIAL_AFTER_SAVE, function($event, $data){	
-    $glossary = new \Glossary\Glossary();
-    if($glossary->isWidgetNeedInit($data['material'])) {
-        $glossary->initGlossary($data['material']);
-        $glossary->addGlossaryMaterial($data['material']);
-    } 
-});

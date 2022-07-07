@@ -1,11 +1,14 @@
+{% extends "layout.twig" %} 
 
-<div class="{{ widget.getParam('css_class') }}">
+{% block main %}
+<div style="max-width: 85rem; margin: 0 auto;" class="{{ widget.getParam('css_class') }}">
 
+	{% block title %}<h1 style="margin-bottom: 30px;">{{ widget.getParam('term') }}</h1>{% endblock %}
 	<p class="h2">{{ widget.getParam('description') }}</p>
 
 	{% if widget.getParam('synonyms') != [] %}
 		<p class="h3"> Синонимы: 
-		{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{% if m['link'] != '' %}<a href="{{ m['link'] }}" title="Описание термина &#171;{{ m['term'] }}&#187">{{ m['term'] }}</a>{% else %}{{ m['term'] }}{% endif %}{% endfor %}
+		{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{% if m['link'] != '' %}<a href="{{ m['link'] }}" title="Описание термина &#171;{{ m['term'] }}&#187;">{{ m['term'] }}</a>{% else %}{{ m['term'] }}{% endif %}{% endfor %}
 		</p>
 	{% endif %}
 	
@@ -16,4 +19,4 @@
 	{% endif %}
 			  
 </div>
-
+{% endblock %} 
