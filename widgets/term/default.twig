@@ -1,22 +1,46 @@
 {% extends "layout.twig" %} 
 
 {% block main %}
-<div style="max-width: 85rem; margin: 0 auto;" class="{{ widget.getParam('css_class') }}">
+	<div class="grid-container">
+		<div class="grid-x grid-padding-x">
+			<div class="cell">
+				{% widget 'Breadcrumbs' %}
+			</div>
+		</div>
+	</div>
 
-	{% block title %}<h1 style="margin-bottom: 30px;">{{ widget.getParam('term') }}</h1>{% endblock %}
-	<p class="h2">{{ widget.getParam('description') }}</p>
+	<div class="grid-container">
+		<div class="grid-x grid-padding-x">
+			<div class="cell">
+				{% block title %}<h1>{{ widget.getParam('term') }}</h1>{% endblock %}
+			</div>
+		</div>
+	</div>
 
-	{% if widget.getParam('synonyms') != [] %}
-		<p class="h3"> Синонимы: 
-		{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{% if m['link'] != '' %}<a href="{{ m['link'] }}" title="Описание термина &#171;{{ m['term'] }}&#187;">{{ m['term'] }}</a>{% else %}{{ m['term'] }}{% endif %}{% endfor %}
-		</p>
-	{% endif %}
-	
-	{% if widget.getParam('links') != [] %}
-		<p class="h3"> Ссылки: 
-		{% for m in widget.getParam('links') %}{{ m['separator'] }}<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>{% endfor %}
-		</p>
-	{% endif %}
-			  
-</div>
+	<div class="padding-top-12">
+		<div class="grid-container">
+			<div class="grid-x grid-padding-x">
+				<div class="cell">
+					<div class="{{ widget.getParam('css_class') }}">
+
+						<p class="h2">{{ widget.getParam('description') }}</p>
+
+						{% if widget.getParam('synonyms') != [] %}
+							<p class="h3"> Синонимы: 
+							{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{% if m['link'] != '' %}<a href="{{ m['link'] }}" title="Описание термина &#171;{{ m['term'] }}&#187;">{{ m['term'] }}</a>{% else %}{{ m['term'] }}{% endif %}{% endfor %}
+							</p>
+						{% endif %}
+						
+						{% if widget.getParam('links') != [] %}
+							<p class="h3"> Ссылки: 
+							{% for m in widget.getParam('links') %}{{ m['separator'] }}<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>{% endfor %}
+							</p>
+						{% endif %}
+								
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
 {% endblock %} 

@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function regExpForWord(word) {
-    return new RegExp('([^A-Za-zа-яА-ЯЁё\.-]' + word + '$|^' + word + '[^A-Za-zа-яА-ЯЁё\.-]|[^A-Za-zа-яА-ЯЁё\.-]'+ word + '[^A-Za-zа-яА-ЯЁё-]|^' + word + '$)', "i");
+    return new RegExp('([^a-zа-яА-ЯЁё\.-]' + word + '$|^' + word + '[^a-zа-яА-ЯЁё\.-]|[^a-zа-яА-ЯЁё\.-]'+ word + '[^a-zа-яА-ЯЁё-]|^' + word + '$)', "i");
   }
 
   function addStubs(text, item) {

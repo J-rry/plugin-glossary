@@ -8,6 +8,7 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
 
   protected $_params = array(
   'struct'         => '',
+  'page_h1'        => 'Глоссарий',
   'css_class'      => 'widget-glossary',
   'template'       => 'default.twig',
   );
@@ -28,7 +29,7 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
     $a->addHeadString('<meta property="og:description" content="'.htmlspecialchars($description).'"/>', 'og:description');
     $a->setPageProperty('keywords', $keywords);
 
-    echo $glossary->getGlossaryWidget();
+    $glossary->getGlossaryWidget()->display();
   }
 
 }

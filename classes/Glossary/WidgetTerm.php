@@ -25,7 +25,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
 
     if($termData === null) {
       $twig = $a->getTwig();
-      $twig->display('page_404.twig', []);
+      $twig->display('page_section.twig', []);
     } else {
       //Маски мета-тегов
       $title = "Описание термина &#171;" . $termData[0] . "&#187;";
@@ -38,7 +38,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
       $a->addHeadString('<meta property="og:description" content="'.htmlspecialchars($description).'"/>', 'og:description');
       $a->setPageProperty('keywords', $keywords);
 
-      echo $glossary->getTermWidget($termData);
+      $glossary->getTermWidget($termData)->display();
     }
   }
 

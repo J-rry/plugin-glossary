@@ -21,14 +21,14 @@ if ($action == 'delete_term') {
 
 if ($action == 'save_term') {
 
-	$query = 'glossary_data SET term=?, specification=?, synonyms=?, links=?';
+	$query = 'glossary_data SET term=?, specification=?, synonyms=?';
 
     if($id) 
         $query = 'UPDATE ' . $query . ' WHERE id=' . $id;
     else 
         $query = 'INSERT INTO ' . $query;
     
-    $application->getConn()->executeQuery($query, array($_POST['term'], $_POST['specification'], $_POST['synonyms'], ''));
+    $application->getConn()->executeQuery($query, array($_POST['term'], $_POST['specification'], $_POST['synonyms']));
     if (!$id) $id = $application->getConn()->lastInsertId();
             
     $res['success'] = true;
@@ -40,8 +40,7 @@ if ($action == 'get_g_list') {
 	$query = 'SELECT * FROM glossary_data WHERE id=?';
 	
 	$res['data'] = $application->getConn()->fetchAssoc($query, array((int)$_REQUEST['id']));
-
 	$res['success'] = true;  
-    
 }
+
 echo json_encode($res);

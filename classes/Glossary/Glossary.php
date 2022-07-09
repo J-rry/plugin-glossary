@@ -30,11 +30,11 @@ class Glossary {
 
     if($isGlossaryPageExist) {
       $newData = array_map(function($term) {
-        return [$term[0], $term[1], self::$glossaryPath . $this->toAlias($term[0])];
+        return [$term['term'], $term['specification'], self::$glossaryPath . $this->toAlias($term['term'])];
       }, $data);
     } else {
       $newData = array_map(function($term) {
-        return [$term[0], $term[1]];
+        return [$term['term'], $term['specification']];
       }, $data);
     }
 
@@ -43,21 +43,21 @@ class Glossary {
 
   public function getGlossaryWidget() {
     $a = \Cetera\Application::getInstance();
-    $html = $a->getWidget('Glossary', array(
+    $widget = $a->getWidget('Glossary', array(
       'struct' => $this->createTemplateGlossaryData()
-    ))->getHtml();
-    return $html;
+    ));
+    return $widget;
   }
 
   public function getTermWidget($term) {
     $a = \Cetera\Application::getInstance();
-    $html = $a->getWidget('Term', array(
+    $widget = $a->getWidget('Term', array(
       'term'        => $term[0],
       'description' => $term[1],
       'synonyms'    => $this->createSynonymsData($term[2]),
       'links'       => $this->createLinksData($term[3])
-      ))->getHtml();
-    return $html;
+      ));
+    return $widget;
   }
 
   protected function toAlias($name) {
@@ -105,26 +105,15 @@ class Glossary {
   }
   
    //Получает данные из бд (и приводит к необходимому виду)
-  protected function getData($dataType = 1) {
+  protected function getData() {
     $dataFromDB = include __DIR__ . '/../../g_data.php';
 
-    if($dataType === 0)
-      return $dataFromDB;
-
     $data = array_reduce($dataFromDB, function($dataArray, $term) {
-      $dataArray[] = $this->toData($term);
+      $dataArray[] = [$term['term'], $term['specification'], $term['synonyms']];
       return $dataArray;
     }, []);
-    return $data;
-  }
 
-  public function toData($data) {
-    return [
-      $data['term'], 
-      $data['specification'], 
-      $data['synonyms'], 
-      $data['links']
-    ];
+    return $data;
   }
 
   //Получаем алфавит, на основании существующих терминов

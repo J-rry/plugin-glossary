@@ -31,27 +31,23 @@ msgstr "Definition"
 msgid "Синонимы"
 msgstr "Synonyms"
 
-#: g_data_grid.js:50
+#: g_data_grid.js:49
 msgid "Создать"
 msgstr "Create"
 
-#: g_data_grid.js:60
+#: g_data_grid.js:59
 msgid "Редактировать"
 msgstr "Edit"
 
-#: g_data_grid.js:70
+#: g_data_grid.js:69
 msgid "Удалить"
 msgstr "Delete"
 
-#: g_data_grid.js:80
-msgid "Обновить Глоссарий"
-msgstr "Update the Glossary"
-
-#: g_data_grid.js:121
+#: g_data_grid.js:110
 msgid "Удалить термин"
 msgstr "Delete term"
 
-#: g_data_grid.js:121
+#: g_data_grid.js:110
 msgid "Вы уверены"
 msgstr "Are you sure"
 

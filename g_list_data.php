@@ -3,7 +3,6 @@ include_once('common_bo.php');
 if (!$application->getUser()->isAdmin()) die('access denied');
 
 $data = array();
-$formattedData = array();
 
 if (!isset($_REQUEST['sort'])) $_REQUEST['sort'] = 'id';
 if (!isset($_REQUEST['dir'])) $_REQUEST['dir'] = 'ASC';
@@ -11,14 +10,13 @@ if (!isset($_REQUEST['dir'])) $_REQUEST['dir'] = 'ASC';
 use Glossary\Glossary;
 $glossary = new Glossary();
 
-$r = $application->getConn()->executeQuery('SELECT id, term, specification, synonyms, links FROM glossary_data ORDER BY '.$_REQUEST['sort'].' '.$_REQUEST['dir']);
+$r = $application->getConn()->executeQuery('SELECT id, term, specification, synonyms FROM glossary_data ORDER BY '.$_REQUEST['sort'].' '.$_REQUEST['dir']);
 while ( $f = $r->fetch() ) {
     $data[] = $f;
-    $formattedData[] = $glossary->toData($f);  
 }
 
 file_put_contents(dirname(__FILE__).'/g_data.php',"<?php\nreturn " . var_export($data, true) . ";");
-file_put_contents(DOCROOT . '/cms/plugins/glossary/g_data.json', $glossary->createDataForJS($formattedData));
+file_put_contents(DOCROOT . '/cms/plugins/glossary/g_data.json', $glossary->createDataForJS($data));
 
 echo json_encode(array(
     'success' => true,
