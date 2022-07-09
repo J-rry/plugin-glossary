@@ -21,16 +21,16 @@
 	<div class="grid-container">
 		<div class="grid-x grid-padding-x">
 			<div class="cell">
-					<div style="max-width: 85rem; margin: 0 auto;" class="{{ widget.getParam('css_class') }}">	
-						{% for m in widget.getParam('struct') %}
-							<h2>{{ m['char'] }}</h2>
-								<ul>
-								{% for n in m['data'] %}
-								<li><a href="{{ n['path'] }}" title="Описание термина &#171;{{ n['term'] }}&#187;">{{ n['term'] }}</a></li>
-								{% endfor %}
-							</ul>
-						{% endfor %}  
-					</div>
+				<div style="max-width: 85rem; margin: 0 auto;" class="{{ widget.getParam('css_class') }}">	
+					{% for m in widget.getParam('struct') %}
+						<h2>{{ m['char'] }}</h2>
+							<ul>
+							{% for n in m['data'] %}
+							<li><a href="{{ n['path'] }}" title="Описание термина &#171;{{ n['term'] }}&#187;">{{ n['term'] }}</a></li>
+							{% endfor %}
+						</ul>
+					{% endfor %}  
+				</div>
 			</div>
 		</div>
 	</div>
