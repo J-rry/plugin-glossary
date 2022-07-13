@@ -19,9 +19,10 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
     $a = \Cetera\Application::getInstance();
 
     //Маски мета-тегов
-    $title = "Глоссарий";
-    $description = "Глоссарий сайта";
-    $keywords = "Глоссарий";
+    $configData = include __DIR__ . '/../../glossary_config.php';
+    $title = $configData['GLOSSARY_TITLE'];
+    $description = $configData['GLOSSARY_DESCRIPTION'];
+    $keywords = $configData['GLOSSARY_KEYWORDS'];
 
     $a->setPageProperty('title', $title);
     $a->addHeadString('<meta property="og:title" content="'.$title.'"/>', 'og:title');

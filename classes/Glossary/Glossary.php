@@ -4,11 +4,17 @@ namespace Glossary;
 
 class Glossary {
 
-  static public $glossaryPath = '/glossary/';
+  protected $glossaryPath;
   protected $data;
 
   public function __construct() {
     $this->data = $this->getData();
+    $this->glossaryPath = self::getPath();
+  }
+
+  static public function getPath() {
+    $configData = include __DIR__ . '/../../glossary_config.php';
+    return $configData['GLOSSARY_PATH'];
   }
 
   public function getDataByAlias($alias) {
@@ -26,11 +32,11 @@ class Glossary {
   }
 
   public function createDataForJS($data) {
-    $isGlossaryPageExist = strlen(self::$glossaryPath) !== 0;
+    $isGlossaryPageExist = strlen($this->glossaryPath) !== 0;
 
     if($isGlossaryPageExist) {
       $newData = array_map(function($term) {
-        return [$term['term'], $term['specification'], self::$glossaryPath . $this->toAlias($term['term'])];
+        return [$term['term'], $term['specification'], $this->glossaryPath . $this->toAlias($term['term'])];
       }, $data);
     } else {
       $newData = array_map(function($term) {
@@ -143,7 +149,7 @@ class Glossary {
             if(mb_strtoupper(mb_substr($term[0], 0, 1)) === mb_strtoupper($char)) {
               $newData[] = [
                 'term'  => $term[0], 
-                'path' => $this->toAlias($term[0])
+                'path' => $this->glossaryPath . $this->toAlias($term[0])
               ];
             }  
             return $newData;
@@ -176,7 +182,7 @@ class Glossary {
         return $this->toAlias($term[0]) === $alias;
       }));
 
-    $path = self::$glossaryPath . $alias;
+    $path = $this->glossaryPath . $alias;
     return [
       'term' => $synonym,
       'link' => $isHavePage ? $path : ''

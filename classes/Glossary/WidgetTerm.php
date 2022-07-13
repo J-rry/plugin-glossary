@@ -28,9 +28,10 @@ class WidgetTerm extends \Cetera\Widget\Templateable
       $twig->display('page_section.twig', []);
     } else {
       //Маски мета-тегов
-      $title = "Описание термина &#171;" . $termData[0] . "&#187;";
-      $description = "Глоссарий. Описание термина &#171;" . $termData[0] . "&#187;";
-      $keywords = "Глоссарий, описание, термин, " . $termData[0];
+      $configData = include __DIR__ . '/../../glossary_config.php';
+      $title = str_replace('{=term}', $termData[0],  $configData['TERMS_TITLE_MASK']);
+      $description = str_replace('{=term}', $termData[0],  $configData['TERMS_DESCRIPTION_MASK']);
+      $keywords = str_replace('{=term}', $termData[0],  $configData['TERMS_KEYWORDS_MASK']);
 
       $a->setPageProperty('title', $title);
       $a->addHeadString('<meta property="og:title" content="'.$title.'"/>', 'og:title');
