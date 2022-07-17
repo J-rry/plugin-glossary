@@ -20,10 +20,5 @@
         "title": "Glossary",
         "description": "Glossary plugin"
     },
-    "require": {},
-    "scripts": {
-        "post-package-install": [
-            "Glossary\\Glossary::postPackageInstall"
-        ]
-    }
+    "require": {}
 }

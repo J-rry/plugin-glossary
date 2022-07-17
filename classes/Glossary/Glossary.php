@@ -2,9 +2,6 @@
 
 namespace Glossary;
 
-use Composer\Script\Event;
-use Composer\Installer\PackageEvent;
-
 class Glossary {
 
   protected $glossaryPath;
@@ -228,11 +225,5 @@ class Glossary {
     }, []);
     
     return $data;
-  }
-  
-  public static function postPackageInstall(PackageEvent $event)
-  {
-      $installedPackage = $event->getOperation()->getPackage();
-      include __DIR__ . '/../../install.php';
   }
 }
