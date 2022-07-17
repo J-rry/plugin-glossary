@@ -20,5 +20,10 @@
         "title": "Glossary",
         "description": "Glossary plugin"
     },
-    "require": {}
+    "require": {},
+    "scripts": {
+        "post-package-install": [
+            "php install.php"
+        ]
+    }
 }
