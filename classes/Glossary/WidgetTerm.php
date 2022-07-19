@@ -30,20 +30,27 @@ class WidgetTerm extends \Cetera\Widget\Templateable
     } else {
       $configData = \Glossary\Glossary::getConfigData();
 
-      $title = str_replace('{=term}', $termData[0],  $configData['TERMS_TITLE_MASK']);
-      $description = str_replace('{=term}', $termData[0],  $configData['TERMS_DESCRIPTION_MASK']);
-      $keywords = str_replace('{=term}', $termData[0],  $configData['TERMS_KEYWORDS_MASK']);
+      $title = str_replace('{=term}', $termData[0],  $configData['term_title_mask']);
+      $description = str_replace('{=term}', $termData[0],  $configData['term_description_mask']);
+      $keywords = str_replace('{=term}', $termData[0],  $configData['term_keywords_mask']);
 
+
+    if(!empty($title)) {
       $a->setPageProperty('title', $title);
       $a->addHeadString('<meta property="og:title" content="'.$title.'"/>', 'og:title');
+    }
+    if(!empty($description)) {
       $a->setPageProperty('description', $description);
       $a->addHeadString('<meta property="og:description" content="'.htmlspecialchars($description).'"/>', 'og:description');
+    }
+    if(!empty($keywords)) {
       $a->setPageProperty('keywords', $keywords);
+    }
 
       $a->getWidget('Term', array(
         'term'        => $termData[0],
         'description' => $termData[1],
-        'synonyms'    => self::createSynonymsData($configData['GLOSSARY_PATH'], $data, $termData[2]),
+        'synonyms'    => self::createSynonymsData($termData[2]),
         'links'       => self::createLinksData($termData[3])
         ))->display();
     }
@@ -60,30 +67,19 @@ class WidgetTerm extends \Cetera\Widget\Templateable
     return $termData;
   }
 
-  protected function createSynonymsData($glossaryPath, $data, $synonyms) {
+  protected function createSynonymsData($synonyms) {
     if(strlen($synonyms) === 0) {
       return [];
     }
     $synonymsArray = mb_split(", ?", $synonyms);
-    $synonymsData = array_reduce($synonymsArray, function($dataResult, $synonym) use($glossaryPath, $data) {
-      $dataSynonym = self::getSynonymData($glossaryPath, $data, $synonym);
+    $synonymsData = array_reduce($synonymsArray, function($dataResult, $synonym) {
+      $dataSynonym['synonym'] = $synonym;
       $dataSynonym['separator'] = count($dataResult) === 0 ? '' : ', ';
       $dataResult[] = $dataSynonym;
       return $dataResult;      
     }, []);
 
     return $synonymsData;
-  }
-
-  protected function getSynonymData($glossaryPath, $data, $synonym) {
-    $alias = \Glossary\Glossary::toAlias($synonym);
-    $isHavePage = count(array_filter($data, fn($term) => \Glossary\Glossary::toAlias($term[0]) === $alias));
-    $path = $glossaryPath . $alias;
-
-    return [
-      'term' => $synonym,
-      'link' => $isHavePage ? $path : ''
-    ];
   }
 
   protected function createLinksData($links) {
@@ -101,20 +97,27 @@ class WidgetTerm extends \Cetera\Widget\Templateable
   }
 
   protected function findTermReference($term) {
+    $termAndSynonyms = empty($term[2]) ? [$term[0]] : [$term[0], ...mb_split(", ?", $term[2])];
     $mainCatalog = \Cetera\Application::getInstance()->getServer();
     $catalogs = $mainCatalog->getSubs();
-    $data = array_reduce($catalogs, function($links, $id) use($term, $mainCatalog) { 
+    $data = array_reduce($catalogs, function($links, $id) use($termAndSynonyms, $mainCatalog) { 
       $catalog = $mainCatalog->getById($id);
       if(!$catalog->isHidden() && !$catalog->getParent()->isHidden()) {
         $materials = $catalog->getMaterials();
         for($i = 0; $i < count($materials); $i++) {
           $html = $materials[$i]['text'];
-          $onlyText = implode("", mb_split("</?.*?>", $html));
-          $regExp = '/([^a-zа-яА-ЯЁё\.-]' . $term[0] . '$|^' . $term[0] . '[^a-zа-яА-ЯЁё\.-]|[^a-zа-яА-ЯЁё\.-]'. $term[0] . '[^a-zа-яА-ЯЁё-])/ui';
-          $isHaveTerm = preg_match($regExp, $onlyText);
-    
-          if($isHaveTerm === 1) {
-            $links[] = ['title' => $materials[$i]['name'], 'link' => $materials[$i]->getUrl()];
+          foreach($termAndSynonyms as $term) {
+            $termPos = mb_stripos($html, $term);
+            if($termPos !== false) {
+              $onlyText = implode("", mb_split("</?.*?>", $html));
+              $regExp = '/([^a-zа-яА-ЯЁё\.-]' . $term . '$|^' . $term . '[^a-zа-яА-ЯЁё\.-]|[^a-zа-яА-ЯЁё\.-]'. $term . '[^a-zа-яА-ЯЁё-])/ui';
+              $isHaveTerm = preg_match($regExp, $onlyText);
+        
+              if($isHaveTerm === 1) {
+                $links[] = ['title' => $materials[$i]['name'], 'link' => $materials[$i]->getUrl()];
+                break;
+              }
+            }
           }
         }
       }

@@ -5,20 +5,25 @@ namespace Glossary;
 class Glossary {
 
   static public function getConfigData() {
-    return include __DIR__ . '/../../glossary_config.php';
+    $application = \Cetera\Application::getInstance();
+    $dataFromDB = $application->getConn()->executeQuery('SELECT glossary_path, glossary_title, glossary_description, glossary_keywords, term_title_mask, term_description_mask, term_keywords_mask FROM glossary_options');
+    $data = $dataFromDB->fetch();
+    return $data;
   }
 
   //Получает данные из бд и приводит к необходимому виду
   static public function getData() {
-    return include __DIR__ . '/../../g_data.php';
-  }
-
-  static public function toFormatedData($term) {
-    return [$term['term'], $term['specification'], $term['synonyms']];
+    $application = \Cetera\Application::getInstance();
+    $dataFromDB = $application->getConn()->executeQuery('SELECT term, specification, synonyms FROM glossary_data');
+    $data = [];
+    while ($term = $dataFromDB->fetch()) {
+      $data[] = [$term['term'], $term['specification'], $term['synonyms']];
+    }
+    return $data;
   }
 
   static public function createDataForJS($data) {
-    $glossaryPath = self::getConfigData()['GLOSSARY_PATH'];
+    $glossaryPath = self::getConfigData()['glossary_path'];
     $isGlossaryPageExist = strlen($glossaryPath) !== 0;
 
     if($isGlossaryPageExist) 

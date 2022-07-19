@@ -27,7 +27,7 @@
 
 						{% if widget.getParam('synonyms') != [] %}
 							<p class="h3"> Синонимы: 
-							{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{% if m['link'] != '' %}<a href="{{ m['link'] }}" title="Описание термина &#171;{{ m['term'] }}&#187;">{{ m['term'] }}</a>{% else %}{{ m['term'] }}{% endif %}{% endfor %}
+							{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{{ m['synonym'] }}{% endfor %}
 							</p>
 						{% endif %}
 						

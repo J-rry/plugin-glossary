@@ -13,24 +13,30 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
   'template'       => 'default.twig',
   );
 
-  static public function index() {
+  static function index() {
 
     $a = \Cetera\Application::getInstance();
 
     $configData = \Glossary\Glossary::getConfigData();
     $data = \Glossary\Glossary::getData();
-    $glossaryPath = $configData['GLOSSARY_PATH'];
+    $glossaryPath = $configData['glossary_path'];
 
     //Маски мета-тегов
-    $title = $configData['GLOSSARY_TITLE'];
-    $description = $configData['GLOSSARY_DESCRIPTION'];
-    $keywords = $configData['GLOSSARY_KEYWORDS'];
+    $title = $configData['glossary_title'];
+    $description = $configData['glossary_description'];
+    $keywords = $configData['glossary_keywords'];
 
-    $a->setPageProperty('title', $title);
-    $a->addHeadString('<meta property="og:title" content="'.$title.'"/>', 'og:title');
-    $a->setPageProperty('description', $description);
-    $a->addHeadString('<meta property="og:description" content="'.htmlspecialchars($description).'"/>', 'og:description');
-    $a->setPageProperty('keywords', $keywords);
+    if(!empty($title)) {
+      $a->setPageProperty('title', $title);
+      $a->addHeadString('<meta property="og:title" content="'.$title.'"/>', 'og:title');
+    }
+    if(!empty($description)) {
+      $a->setPageProperty('description', $description);
+      $a->addHeadString('<meta property="og:description" content="'.htmlspecialchars($description).'"/>', 'og:description');
+    }
+    if(!empty($keywords)) {
+      $a->setPageProperty('keywords', $keywords);
+    }
 
     $a->getWidget('Glossary', array(
       'struct' => self::createTemplateGlossaryData($glossaryPath, $data)
@@ -46,7 +52,7 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
   }
 
   //Получает структуру главной страницы глоссария в виде массива
-  protected function createTemplateGlossaryData($glossaryPath, $data) {
+  public function createTemplateGlossaryData($glossaryPath, $data) {
     $alphabet = self::getAlphabet($data);
 
     $dataStruct = array_reduce($alphabet, 
