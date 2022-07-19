@@ -5,7 +5,7 @@
 use \Laminas\Router\Http\Regex;
 use \Laminas\Router\Http\Segment;
 
-$glossaryPath = Glossary\Glossary::getPath();
+$glossaryPath = Glossary\Glossary::getConfigData()['GLOSSARY_PATH'];
 
 if(strlen($glossaryPath) !== 0) {
 
