@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
+
   const material = document.querySelector(".x-cetera-widget");
+
   if(material === null) {
     return;
   } 
@@ -73,6 +75,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return "<a href='" + link + "' title='" + specification + "'>" + term + "</a>";
       }
     }
+
+    this.termFinded = function(name) {
+      const term = this.getTermByName(name);
+      //term.finded();
+      this.glossary.forEach(function(termData) {
+        if(term.link === termData.link)
+          termData.finded();
+      });
+    }
   }
 
   function regExpForWord(word) {
@@ -92,9 +103,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //Отсекаем часть терминов, которых нет на странице
     const materialHTML = material.innerHTML.toLocaleLowerCase();
-    const containsData = data.filter(function(termData) {
-      return materialHTML.indexOf(termData[0].toLocaleLowerCase()) !== -1;
-    })
+    const containsData = data.reduce(function(result, termData) {
+      const findedTerms = termData[0].filter(function(terms) {
+        return materialHTML.indexOf(terms.toLocaleLowerCase()) !== -1;
+      });
+      if(findedTerms.length !== 0) {
+        findedTerms.forEach(function(term) {
+          result.push([term, termData[1], termData[2]]);
+        });
+      }
+      return result;
+    },[]);
 
     //Создаём новый глоссарий
     const glossary = new Glossary();
@@ -144,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if(index === -1){
                   return;
                 }
-                if(index !== 0) {
+                if(index !== 0){
                   index++;
                 }
                 
@@ -154,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   let wrappedTerm;
 
                   if(otherTermsContainsTerm.length === 0) {
-                    glossary.getTermByName(term).finded();
+                    glossary.termFinded(term);
                     wrappedTerm = glossary.setTermWrappByType(newNode.slice(index, index + term.length));
                     newNode = newNode.slice(0, index) + wrappedTerm + newNode.slice(index + term.length, newNode.length);
                     cutNode = addStubs(newNode, wrappedTerm);
@@ -173,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if(newIndex !== 0) {
                       newIndex++;
                     }
-                    glossary.getTermByName(term).finded();                                                  
+                    glossary.termFinded(term);                                                  
                     wrappedTerm = glossary.setTermWrappByType(newNode.slice(newIndex, newIndex + term.length));
                     newNode = newNode.slice(0, newIndex) + wrappedTerm + newNode.slice(newIndex + term.length, newNode.length); 
                     cutNode = addStubs(newNode, wrappedTerm);
@@ -220,6 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.NodeList && !NodeList.prototype.forEach) {
       NodeList.prototype.forEach = Array.prototype.forEach;
     }
+    
     if (!Array.prototype.find) {
       Object.defineProperty(Array.prototype, 'find', {
         value: function(predicate) {
