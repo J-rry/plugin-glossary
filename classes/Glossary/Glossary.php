@@ -25,7 +25,6 @@ class Glossary {
   static public function createDataForJS($data) {
     $glossaryPath = self::getConfigData()['glossary_path'];
     $isGlossaryPageExist = strlen($glossaryPath) !== 0;
-    //$terms = empty($data['synonyms']) ? [$data['term']] : [$data['term'], ...mb_split(", ?", $data['synonyms'])];
 
     if($isGlossaryPageExist) 
       $newData = array_map(fn($term) => [empty($term['synonyms']) ? [$term['term']] : [$term['term'], ...mb_split(", ?", $term['synonyms'])], $term['specification'], $glossaryPath . self::toAlias($term['term'])], $data);

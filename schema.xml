@@ -13,8 +13,8 @@
 
 <table name="glossary_options">
     <field name="id" type="int(11)" null="0" auto_increment="1" />
-    <field name="glossary_path" type="varchar(100)" null="0" default="" />
-    <field name="glossary_title" type="varchar(100)" null="0" default="Глоссарий сайта" />
+    <field name="glossary_path" type="varchar(100)" null="0" />
+    <field name="glossary_title" type="varchar(100)" null="0" />
 	<field name="glossary_description" type="varchar(700)" null="0" />
     <field name="glossary_keywords" type="varchar(200)" null="0" />
     <field name="term_title_mask" type="varchar(120)" null="0" />
