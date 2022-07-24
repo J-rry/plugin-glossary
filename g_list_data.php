@@ -12,8 +12,6 @@ while ( $f = $r->fetch() ) {
     $data[] = $f;
 }
 
-file_put_contents(DOCROOT . '/cms/plugins/glossary/g_data.json', \Glossary\Glossary::createDataForJS($data));
-
 echo json_encode(array(
     'success' => true,
     'rows'    => $data

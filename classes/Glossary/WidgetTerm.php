@@ -5,6 +5,7 @@ namespace Glossary;
 class WidgetTerm extends \Cetera\Widget\Templateable
 {
 	use \Cetera\Widget\Traits\Material;
+  use \Glossary\Traits\GlossaryTraits;
 
   protected $_params = array(
   'term'           => '',
@@ -15,12 +16,12 @@ class WidgetTerm extends \Cetera\Widget\Templateable
   'template'       => 'default.twig',
   );
 
-  static function index() {
+  static public function index() {
     $a = \Cetera\Application::getInstance();
     $address = explode("/", $_SERVER['REQUEST_URI']);
     $termAlias = $address[count($address) - 1];
 
-    $data = \Glossary\Glossary::getData();
+    $data = self::getGlossaryData();
     $termData = self::getDataByAlias($data, $termAlias);
 
 
@@ -28,7 +29,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
       $twig = $a->getTwig();
       $twig->display('page_section.twig', []);
     } else {
-      $configData = \Glossary\Glossary::getConfigData();
+      $configData = self::getGlossaryConfigData();
 
       $title = str_replace('{=term}', $termData[0],  $configData['term_title_mask']);
       $description = str_replace('{=term}', $termData[0],  $configData['term_description_mask']);
@@ -57,7 +58,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
   }
 
   public function getDataByAlias($data, $alias) {
-    $termData = array_values(array_filter($data, fn($term) => $alias === \Glossary\Glossary::toAlias($term[0])));
+    $termData = array_values(array_filter($data, fn($term) => $alias === self::toGlossaryAlias($term[0])));
     if(!count($termData)) {
       return null;
     }

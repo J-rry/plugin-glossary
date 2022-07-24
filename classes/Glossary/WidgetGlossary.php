@@ -5,6 +5,7 @@ namespace Glossary;
 class WidgetGlossary extends \Cetera\Widget\Templateable
 {
 	use \Cetera\Widget\Traits\Material;
+  use \Glossary\Traits\GlossaryTraits;
 
   protected $_params = array(
   'struct'         => '',
@@ -13,12 +14,12 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
   'template'       => 'default.twig',
   );
 
-  static function index() {
+  static public function index() {
 
     $a = \Cetera\Application::getInstance();
 
-    $configData = \Glossary\Glossary::getConfigData();
-    $data = \Glossary\Glossary::getData();
+    $configData = self::getGlossaryConfigData();
+    $data = self::getGlossaryData();
     $glossaryPath = $configData['glossary_path'];
 
     //Маски мета-тегов
@@ -64,7 +65,7 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
             if(mb_strtoupper(mb_substr($term[0], 0, 1)) === mb_strtoupper($char)) {
               $newData[] = [
                 'term'  => $term[0], 
-                'path' => $glossaryPath . \Glossary\Glossary::toAlias($term[0])
+                'path' => $glossaryPath . self::toGlossaryAlias($term[0])
               ];
             }  
             return $newData;
