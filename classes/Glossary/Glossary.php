@@ -7,10 +7,9 @@ class Glossary {
   use \Glossary\Traits\GlossaryTraits;
 
   static protected $data;
-  static protected $material;
   static public $glossaryPath;
 
-  static public function pageMaterial($address) {
+  static public function isHavePageMaterial($address) {
     $a = \Cetera\Application::getInstance();
     $catalog = $a->getCatalog();
     $catalogUrl = $catalog->getUrl();
@@ -24,17 +23,15 @@ class Glossary {
     if(count($materials) === 0) {
       return false;
     }
-    self::$material = $materials[0];
 
-    return $materials[0];
+    return true;
   }
 
   protected function createDataForReferences($data) {
-    $glossaryPath = self::$glossaryPath;
-
-    $newData = array_reduce($data, function($result, $term) use ($glossaryPath) {
+    $newData = array_reduce($data, function($result, $term) {
       $terms = empty($term[2]) ? [$term[0]] : [$term[0], ...mb_split(", ?", $term[2])];
-      $groupData = array_map(fn($termName) => ['term' => $termName, 'specification' => $term[1], 'link' => $glossaryPath . self::toGlossaryAlias($term[0])], $terms);
+      $groupData = array_map(fn($termName) => 
+        ['term' => $termName, 'specification' => $term[1], 'alias' => self::toGlossaryAlias($term[0])], $terms);
       $result = [...$result, ...$groupData];
       return $result;
     }, []);
@@ -42,10 +39,13 @@ class Glossary {
     return $newData;
   }
 
-  protected function wrapTerm($text, $specification, $link) {
-    if($link === '') {
+  protected function wrapTerm($text, $specification, $alias) {
+    $glossaryPath = self::$glossaryPath;
+
+    if($glossaryPath === '') {
       return "<abbr title='$specification'>$text</abbr>";
     }
+    $link = $glossaryPath . $alias;
     return "<a href='$link' title='$specification'>$text</a>";
   }
 
@@ -68,7 +68,7 @@ class Glossary {
     $newData = array_reduce($terms, function($result, $termData) use ($terms) {
       $references = [];
       foreach($terms as $termData2) {
-        if($termData['link'] !== $termData2['link'] && preg_match(self::termFindRegExp($termData['term']), $termData2['term']) === 1) {
+        if($termData['alias'] !== $termData2['alias'] && preg_match(self::termFindRegExp($termData['term']), $termData2['term']) === 1) {
           $references[] = $termData2['term'];
         }
       }
@@ -85,7 +85,8 @@ class Glossary {
 
   protected function findTermPos($newHtml, $term) {
     if($term['isFinded'] === false) {
-      $withoutLinks = mb_ereg_replace_callback("<a.*?>.*?</a>", fn($match) => str_repeat('|', strlen($match[0])), $newHtml);
+      $withoutAbbrs = mb_ereg_replace_callback("<abbr.*?>.*?</abbr>", fn($match) => str_repeat('|', strlen($match[0])), $newHtml);
+      $withoutLinks = mb_ereg_replace_callback("<a.*?>.*?</a>", fn($match) => str_repeat('|', strlen($match[0])), $withoutAbbrs);
       $onlyText = mb_ereg_replace_callback("</?.*?>", fn($match) => str_repeat('|', strlen($match[0])), $withoutLinks); 
       if(count($term['containsTerms']) !== 0) {
         foreach($term['containsTerms'] as $containingTerm) {
@@ -108,39 +109,52 @@ class Glossary {
     $data = self::$data;
 
     $updateData = array_map(function($termData) use ($term) {
-      if($term['link'] === $termData['link'])
+      if($term['alias'] === $termData['alias'])
         $termData['isFinded'] = true;
       return $termData;
     }, $data);
     self::$data = $updateData;
   }
 
-  static public function wrapTermsOnPage() {
-    $html = self::$material['text'];
+  static public function wrapTermsOnPage(&$res) {
+    $materialPosData = self::findMaterialOnPage($res);
+    if($materialPosData === false) {
+      return;
+    }
+    $html = $materialPosData['material'];
     $newHtml = $html;
     self::$data = self::getContainsTermsData($html);
     for($i = 0; $i < count(self::$data); $i++) {
       $term = self::$data[$i];
       $findTerm = self::findTermPos($newHtml, $term);
       if($findTerm !== false) {
-        $newHtml = substr_replace($newHtml, self::wrapTerm($findTerm['term'], $term['specification'], $term['link']), $findTerm['start'], $findTerm['length']);
+        $newHtml = substr_replace($newHtml, self::wrapTerm($findTerm['term'], $term['specification'], $term['alias']), $findTerm['start'], $findTerm['length']);
       } 
     }
 
-    self::log($newHtml);
-    // self::$material['text'] = $newHtml;
-    // $a = \Cetera\Application::getInstance();
-    // $twig = $a->getTwig();
-    // $catalog = $a->getCatalog();
-    // $m = $catalog->getMaterials()->where("alias='webmaster'")[0];
-
-    // $twig->display('page_section.twig', array("material" => $m));
+    $res = substr_replace($res, $newHtml, $materialPosData['start'], $materialPosData['length']);
   }
 
-  static public function log($data) {
-    echo '<hr>';
-    echo '<pre>';
-    var_dump($data);
-    echo '</pre>';
+  protected function findMaterialOnPage($res) {
+    $isHaveMaterial = preg_match('/<div class="x-cetera-widget" data-class="Cetera.fo.Material"/', $res, $matches, PREG_OFFSET_CAPTURE);
+    if($isHaveMaterial === false) {
+      return false;
+    }
+    $start = $matches[0][1];
+    $offset = $start + strlen($matches[0][0]);
+    $openDiv = 0;
+    
+    while($openDiv !== -1) {
+      preg_match('/<\/?div.*?>/', $res, $matches, PREG_OFFSET_CAPTURE, $offset);
+      if(strpos($matches[0][0], '</div>') === false) {
+        $openDiv++;
+      } else {
+        $openDiv--;
+      }
+      $offset = $matches[0][1] + strlen($matches[0][0]);
+    }
+    $end = $offset;
+    return ['start' => $start, 'length' => $end - $start, 'material' => substr($res, $start, $end - $start)];
   }
 }
+

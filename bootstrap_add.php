@@ -23,17 +23,9 @@ if(strlen($glossaryPath) !== 0) {
 }
 
 $address = $_SERVER['REQUEST_URI'];
-$pageMaterial = Glossary\Glossary::pageMaterial($address);
+$isHavePageMaterial = Glossary\Glossary::isHavePageMaterial($address);
 
-if($pageMaterial !== false && $address !== $glossaryPath) {
-
+if($isHavePageMaterial && $address !== $glossaryPath) {
 	Glossary\Glossary::$glossaryPath = $glossaryPath;
-	
-	$router = Cetera\Application::getInstance()->getRouter();
-
-	$router->addRoute('glossary', Regex::factory([
-			'regex' => $address . '?',
-			'defaults' => ['controller' => '\Glossary\Glossary', 'action' => 'wrapTermsOnPage'],
-			'spec' => $address,
-	]), 1);
+	$a->registerOutputHandler(["\Glossary\Glossary", "wrapTermsOnPage"]);
 }
