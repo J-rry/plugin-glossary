@@ -1,27 +1,26 @@
 <?php
 
-namespace Glossary\Traits;
+namespace Glossary;
 
-trait GlossaryTraits {
+class Data {
   
-  static public function getGlossaryConfigData() {
+  static public function getTermDataByAlias($alias) {
     $application = \Cetera\Application::getInstance();
-    $dataFromDB = $application->getConn()->executeQuery('SELECT glossary_path, glossary_title, glossary_description, glossary_keywords, term_title_mask, term_description_mask, term_keywords_mask FROM glossary_options');
-    $data = $dataFromDB->fetch();
-    return $data;
+    $data = $application->getConn()->fetchAssoc('SELECT * FROM glossary_data WHERE alias=?', array($alias)); 
+	  return $data;
   }
 
-  static public function getGlossaryData() {
+  static public function getData() {
     $application = \Cetera\Application::getInstance();
-    $dataFromDB = $application->getConn()->executeQuery('SELECT term, specification, synonyms FROM glossary_data');
+    $dataFromDB = $application->getConn()->executeQuery('SELECT term, specification, synonyms, alias FROM glossary_data');
     $data = [];
     while ($term = $dataFromDB->fetch()) {
-      $data[] = [$term['term'], $term['specification'], $term['synonyms']];
+      $data[] = $term;
     }
     return $data;
   }
 
-  static public function toGlossaryAlias($name) {
+  static public function toAlias($name) {
     $alias = implode('-', mb_split(' ', mb_strtolower($name)));
     if(preg_match('/[а-яё]/u', $alias)) {
       $ruAlphabet = [

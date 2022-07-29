@@ -2,30 +2,39 @@
 
 namespace Glossary;
 
+use \Laminas\Router\Http\Regex;
+
 class WidgetGlossary extends \Cetera\Widget\Templateable
 {
 	use \Cetera\Widget\Traits\Material;
-  use \Glossary\Traits\GlossaryTraits;
 
   protected $_params = array(
   'struct'         => '',
+  'glossary_path'  => '',
   'page_h1'        => 'Глоссарий',
   'css_class'      => 'widget-glossary',
   'template'       => 'default.twig',
   );
 
-  static public function index() {
+  static public function initPage($glossaryPath) {
+    $router = \Cetera\Application::getInstance()->getRouter();
+    $router->addRoute('glossary', Regex::factory([
+      'regex' => $glossaryPath . '?',
+      'defaults' => ['controller' => '\Glossary\WidgetGlossary', 'action' => 'index'],
+      'spec' => $glossaryPath,
+    ]), 1);
+  }
 
+  static public function index() {
     $a = \Cetera\Application::getInstance();
 
-    $configData = self::getGlossaryConfigData();
-    $data = self::getGlossaryData();
-    $glossaryPath = $configData['glossary_path'];
+    $data = Data::getData();
+    $glossaryPath = Options::getPath();
 
     //Маски мета-тегов
-    $title = $configData['glossary_title'];
-    $description = $configData['glossary_description'];
-    $keywords = $configData['glossary_keywords'];
+    $title = Options::getTitle();
+    $description = Options::getDescription();
+    $keywords = Options::getKeywords();
 
     if(!empty($title)) {
       $a->setPageProperty('title', $title);
@@ -40,39 +49,20 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
     }
 
     $a->getWidget('Glossary', array(
-      'struct' => self::createTemplateGlossaryData($glossaryPath, $data)
+      'struct' => self::createTemplateGlossaryData($glossaryPath, $data),
+      'glossary_path' => $glossaryPath
     ))->display();
   }
 
-  //Получаем алфавит, на основании существующих терминов
-  protected function getAlphabet($data) {
-    $alphabet = array_unique(array_map(fn($term) => mb_strtoupper(mb_substr($term[0], 0, 1)), $data));
-    sort($alphabet);
-
-    return $alphabet;
-  }
-
-  //Получает структуру главной страницы глоссария в виде массива
   public function createTemplateGlossaryData($glossaryPath, $data) {
-    $alphabet = self::getAlphabet($data);
+    $result = [];
+    foreach ($data as $item) {
+        $char = mb_strtoupper(mb_substr($item['term'], 0, 1));
+        $result[$char] = $result[$char] ?? ['char' => $char, 'data' => []];
+        $result[$char]['data'][] = $item;
+    }
+    usort($result, fn($a, $b) => $a['char'] <=> $b['char']);
 
-    $dataStruct = array_reduce($alphabet, 
-      function($struct, $char) use ($glossaryPath, $data) {
-        $item = [];
-        $item['char'] = $char;
-        $item['data'] = array_reduce($data, 
-          function($newData, $term) use($glossaryPath, $char) {
-            if(mb_strtoupper(mb_substr($term[0], 0, 1)) === mb_strtoupper($char)) {
-              $newData[] = [
-                'term'  => $term[0], 
-                'path' => $glossaryPath . self::toGlossaryAlias($term[0])
-              ];
-            }  
-            return $newData;
-          }, []);
-        $struct[] = $item;
-        return $struct;
-    }, []);
-    return $dataStruct;
+    return $result;
   }
 }

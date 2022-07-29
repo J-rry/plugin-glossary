@@ -23,17 +23,17 @@
 				<div class="cell">
 					<div class="{{ widget.getParam('css_class') }}">
 
-						<p class="h2">{{ widget.getParam('description') }}</p>
+						<p class="h2">{{ widget.getParam('specification') }}</p>
 
-						{% if widget.getParam('synonyms') != [] %}
+						{% if widget.getParam('synonyms') != '' %}
 							<p class="h3"> Синонимы: 
-							{% for m in widget.getParam('synonyms') %}{{ m['separator'] }}{{ m['synonym'] }}{% endfor %}
+								{{ widget.getParam('synonyms') }}
 							</p>
 						{% endif %}
 						
 						{% if widget.getParam('links') != [] %}
 							<p class="h3"> Ссылки: 
-							{% for m in widget.getParam('links') %}{{ m['separator'] }}<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>{% endfor %}
+							{% for m in widget.getParam('links') %}<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>{% if loop.last != true %}, {% endif %}{% endfor %}
 							</p>
 						{% endif %}
 								

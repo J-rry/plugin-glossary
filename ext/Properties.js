@@ -1,4 +1,4 @@
-Ext.define('Plugin.glossary.g_data_props', {
+Ext.define('Plugin.glossary.Properties', {
 
     extend: 'Ext.Window',
 
@@ -54,7 +54,7 @@ Ext.define('Plugin.glossary.g_data_props', {
             bodyStyle: 'background: none',
             method: 'POST',
             waitMsgTarget: true,
-            url: '/plugins/glossary/g_list_actions.php',
+            url: '/plugins/glossary/scripts/actions.php',
             items: this.tabs
         });
 
@@ -84,20 +84,20 @@ Ext.define('Plugin.glossary.g_data_props', {
         this.listId = id;
         if (id > 0) {
             Ext.Ajax.request({
-                url: '/plugins/glossary/g_list_actions.php',
+                url: '/plugins/glossary/scripts/actions.php',
                 params: {
-                    action: 'get_g_list',
+                    action: 'get_term',
                     id: this.listId
                 },
                 scope: this,
                 success: function (resp) {
                     var obj = Ext.decode(resp.responseText);
-                    this.setTitle(_('Изменить термин'));
+                    this.setTitle(_('Редактировать'));
                     this.form.getForm().setValues(obj.data);
                 }
             });
         } else {
-            this.setTitle(_('Новый термин'));
+            this.setTitle(_('Создать'));
         }
     },
 
