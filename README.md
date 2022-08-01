@@ -14,7 +14,15 @@
 
 # Установка
 1. composer require dany/plugin-glossary
-2. Добавляем код из файла bootstrap_add.php в корне модуля, в файл bootstrap.php в папку с темой сайта (обычно www/themes/активная тема/bootstrap.php)
+2. Добавляем следующий код в файл bootstrap.php в папку с темой сайта (обычно www/themes/активная тема/bootstrap.php):
+
+$glossaryPath = \Glossary\Options::getPath();
+\Glossary\PageHandler::init($glossaryPath);
+if(!!strlen($glossaryPath)) {
+	\Glossary\WidgetGlossary::initPage($glossaryPath);
+	\Glossary\WidgetTerm::initPage($glossaryPath);
+}
+
 3. При установке в корне плагина должен автоматически создаться файл glossary_config.php, если файл не создался автоматически, создаём его вручную (<?php return *содержимое переменной $config* из файла install.php)
 4. Указываем в glossary_config.php ссылку по которой хотите расположить глоссарий в параметре GLOSSARY_PATH
 5. Меняем шаблоны страниц глоссария и терминов в папке widgets, если нужно
