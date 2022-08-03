@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2022-06-19 17:32+0300\n"
-"PO-Revision-Date: 2022-06-19 17:39+0300\n"
+"POT-Creation-Date: 2022-08-03 11:58+0300\n"
+"PO-Revision-Date: 2022-08-03 12:01+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: en\n"
@@ -11,62 +11,94 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.1\n"
-"X-Poedit-Basepath: ../ext\n"
-"X-Poedit-KeywordsList: ;_\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-KeywordsList: _\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: Panel.js:14
-msgid "Список терминов"
+#: config.php:24
+msgid "Глоссарий"
+msgstr "Glossary"
+
+#: ext/Options.js:12
+msgid "Настройки разделов"
+msgstr "Partition settings"
+
+#: ext/Options.js:31
+msgid "Адрес глоссария"
+msgstr "Glossary address"
+
+#: ext/Options.js:36
+msgid "Title глоссария"
+msgstr "Title glossary"
+
+#: ext/Options.js:41
+msgid "Мета Description глоссария"
+msgstr "Meta Description glossary"
+
+#: ext/Options.js:46
+msgid "Мета Keywords глоссария"
+msgstr "Meta Keywords glossary"
+
+#: ext/Options.js:51
+msgid "Маска title терминов"
 msgstr "List of terms"
 
-#: g_data_grid.js:7 g_data_props.js:28 g_data_props.js:34
-msgid "Термин"
-msgstr "The term"
+#: ext/Options.js:56
+msgid "Маска Мета Description терминов"
+msgstr "Мета Description mask"
 
-#: g_data_grid.js:8 g_data_props.js:38
-msgid "Определение"
-msgstr "Definition"
+#: ext/Options.js:61
+msgid "Маска Мета Keywords терминов"
+msgstr "Meta Keywords mask"
 
-#: g_data_grid.js:9 g_data_props.js:42
-msgid "Синонимы"
-msgstr "Synonyms"
+#: ext/Options.js:72
+msgid "Сохранить"
+msgstr "Save"
 
-#: g_data_grid.js:49
-msgid "Создать"
-msgstr "Create"
-
-#: g_data_grid.js:59
-msgid "Редактировать"
-msgstr "Edit"
-
-#: g_data_grid.js:69
-msgid "Удалить"
-msgstr "Delete"
-
-#: g_data_grid.js:110
-msgid "Удалить термин"
-msgstr "Delete term"
-
-#: g_data_grid.js:110
-msgid "Вы уверены"
-msgstr "Are you sure"
-
-#: g_data_props.js:64
-msgid "Ок"
-msgstr "Ok"
-
-#: g_data_props.js:68
+#: ext/Options.js:94 ext/Properties.js:68
 msgid "Отмена"
 msgstr "Cancel"
 
-#: g_data_props.js:95
-msgid "Изменить термин"
+#: ext/Panel.js:7 ext/Properties.js:28 ext/Properties.js:34
+msgid "Термин"
+msgstr "The term"
+
+#: ext/Panel.js:8 ext/Properties.js:38
+msgid "Определение"
+msgstr "Definition"
+
+#: ext/Panel.js:9 ext/Properties.js:42
+msgid "Синонимы"
+msgstr "Synonyms"
+
+#: ext/Panel.js:49 ext/Properties.js:100
+msgid "Создать"
+msgstr "Create"
+
+#: ext/Panel.js:59 ext/Properties.js:95
+msgid "Редактировать"
 msgstr "Edit"
 
-#: g_data_props.js:100
-msgid "Новый термин"
-msgstr "New term"
+#: ext/Panel.js:69
+msgid "Удалить"
+msgstr "Delete"
 
-#: g_data_props.js:113
+#: ext/Panel.js:78
+msgid "Настройки"
+msgstr "Options"
+
+#: ext/Panel.js:121
+msgid "Удалить термин"
+msgstr "Delete term"
+
+#: ext/Panel.js:121
+msgid "Вы уверены"
+msgstr "Are you sure"
+
+#: ext/Properties.js:64
+msgid "Ок"
+msgstr "Ok"
+
+#: ext/Properties.js:113
 msgid "Сохранение..."
 msgstr "Preservation.."
