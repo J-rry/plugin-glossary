@@ -8,6 +8,8 @@ class WidgetTerm extends \Cetera\Widget\Templateable
 {
 	use \Cetera\Widget\Traits\Material;
 
+  static protected $links = [];
+
   protected $_params = array(
   'term'           => '',
   'description'    => '',
@@ -61,38 +63,42 @@ class WidgetTerm extends \Cetera\Widget\Templateable
     }
   }
 
+
   protected function findTermReference($term) {
     $termAndSynonyms = empty($term['synonyms']) ? [$term['term']] : [$term['term'], ...mb_split(", ?", $term['synonyms'])];
     $mainCatalog = \Cetera\Application::getInstance()->getServer();
-    $catalogs = $mainCatalog->getSubs();
-    $data = array_reduce($catalogs, function($links, $id) use($termAndSynonyms, $mainCatalog) { 
-      $catalog = $mainCatalog->getById($id);
+    self::findReferenceInChildrenCatalogs($mainCatalog, $termAndSynonyms);
 
-      if($catalog->isHidden() || $catalog->getParent()->isHidden()) 
-        return $links;
-        
-      $materials = $catalog->getMaterials();
-      for($i = 0; $i < count($materials); $i++) {
-        $html = $materials[$i]['text'];
-        foreach($termAndSynonyms as $term) {
-          $termPos = mb_stripos($html, $term);
+    return self::$links;
+  }
 
-          if($termPos === false)
-            continue;
+  protected function findReferenceInMaterials($catalog, $termAndSynonyms) {
+    $materials = $catalog->getMaterials();
+    for($i = 0; $i < count($materials); $i++) {
+      $html = $materials[$i]['text'];
+      foreach($termAndSynonyms as $term) {
+        $termPos = mb_stripos($html, $term);
 
-          $onlyText = implode("", mb_split("</?.*?>", $html));
-          $regExp = PageHandler::termFindRegExp($term);
-          $isHaveTerm = preg_match($regExp, $onlyText);
-    
-          if($isHaveTerm === 1) {
-            $links[] = ['title' => $materials[$i]['name'], 'link' => $materials[$i]->getUrl()];
-            break;
-          }
+        if($termPos === false)
+          continue;
+
+        $onlyText = implode("", mb_split("</?.*?>", $html));
+        $regExp = PageHandler::termFindRegExp($term);
+        $isHaveTerm = preg_match($regExp, $onlyText);
+  
+        if($isHaveTerm === 1) {
+          self::$links[] = ['title' => $materials[$i]['name'], 'link' => $materials[$i]->getUrl()];
+          break;
         }
       }
-      return $links;
-    }, []);
-    
-    return $data;
+    }
+  }
+
+  public function findReferenceInChildrenCatalogs($catalog, $termAndSynonyms) {
+    $childrenCatalogs = $catalog->getChildren();
+    for($i = 0; $i < count($childrenCatalogs); $i++) {
+      self::findReferenceInMaterials($childrenCatalogs[$i], $termAndSynonyms);
+      self::findReferenceInChildrenCatalogs($childrenCatalogs[$i], $termAndSynonyms);
+    }
   }
 }
