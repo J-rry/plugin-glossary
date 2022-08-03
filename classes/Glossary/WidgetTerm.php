@@ -30,7 +30,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
   static public function index() {
     $a = \Cetera\Application::getInstance();
     $address = explode("/", $_SERVER['REQUEST_URI']);
-    $termAlias = $address[count($address) - 1];
+    $termAlias = (substr($_SERVER['REQUEST_URI'], -1) !== '/') ? $address[count($address) - 1] : $address[count($address) - 2];
     $termData = Data::getTermDataByAlias($termAlias);
 
     if($termData === false) {
