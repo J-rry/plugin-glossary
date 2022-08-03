@@ -10,7 +10,7 @@ class PageHandler {
   static public function init($glossaryPath) {
     $address = $_SERVER['REQUEST_URI'];
 
-    if(strpos($address, $glossaryPath) === false) {
+    if(empty($glossaryPath) || strpos($address, $glossaryPath) === false) {
       self::$glossaryPath = $glossaryPath;
       $application = \Cetera\Application::getInstance();
       $application->registerOutputHandler(["\Glossary\PageHandler", "wrapTermsOnPage"]);

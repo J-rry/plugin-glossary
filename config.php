@@ -19,7 +19,7 @@ if ( $this->getBo() && $this->getUser() && $this->getUser()->isAdmin() )
 {
 
     $this->getBo()->addModule(array(
-        'id'       => 'glossary_plugin',
+        'id'       => 'glossary',
         'position' => MENU_SITE,
         'name' 	   => $t->_('Глоссарий'),
         'icon'     => '/cms/plugins/glossary/images/icon.gif',
