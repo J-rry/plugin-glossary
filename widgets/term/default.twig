@@ -22,20 +22,45 @@
 			<div class="grid-x grid-padding-x">
 				<div class="cell">
 					<div class="{{ widget.getParam('css_class') }}">
-
-						<p class="h3">{{ widget.getParam('specification') }}</p>
+					
+						<div class="grid-container">
+							<div class="grid-x grid-padding-x">
+								<div class="cell">
+									<div class="{{ widget.getParam('css_class') }}__specification">
+										{{ widget.getParam('specification')|raw }}
+									</div>
+								</div>
+							</div>
+						</div>
 
 						{% if widget.getParam('synonyms') != '' %}
-							<p class="h4"> Синонимы: 
-								{{ widget.getParam('synonyms') }}
-							</p>
-						{% endif %}
-						
+						<div class="grid-container">
+							<div class="grid-x grid-padding-x">
+								<div class="cell">
+									<div class="{{ widget.getParam('css_class') }}__synonyms padding-bottom-2">Синонимы: {{ widget.getParam('synonyms') }}</div>
+								</div>
+							</div>
+						</div>
+						{% endif %}	
+
 						{% if widget.getParam('links') != [] %}
-							<p class="h4"> Ссылки: 
-							{% for m in widget.getParam('links') %}<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>{% if loop.last != true %}, {% endif %}{% endfor %}
-							</p>
-						{% endif %}
+						<div class="grid-container">
+							<div class="grid-x grid-padding-x">
+								<div class="cell">
+									<div class="{{ widget.getParam('css_class') }}__links">
+										<p class="margin-bottom-1">Ссылки:</p>
+										<ul>
+											{% for m in widget.getParam('links') %}
+												<li>
+													<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>
+												</li>
+											{% endfor %}
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+						{% endif %}					
 								
 					</div>
 				</div>

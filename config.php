@@ -14,17 +14,11 @@ $this->registerWidget(array(
     'not_placeable' => true,
 ));
 
-
-if ( $this->getBo() && $this->getUser() && $this->getUser()->isAdmin() )
-{
-
-    $this->getBo()->addModule(array(
-        'id'       => 'glossary',
-        'position' => MENU_SITE,
-        'name' 	   => $t->_('Глоссарий'),
-        'icon'     => '/cms/plugins/glossary/images/icon.gif',
-        'iconCls'  => 'x-fa fa-directions',
-        'class'    => 'Plugin.glossary.Panel'
-    ));
-    
+$url = \Glossary\Data::catalogUrl();
+if (!!$url) {
+    \Glossary\WidgetGlossary::initPage($url);
+    if(\Glossary\Data::isMaterialExist())
+	    \Glossary\WidgetTerm::initPage($url);
+} else {
+    \Glossary\PageHandler::init($glossaryPath);
 }

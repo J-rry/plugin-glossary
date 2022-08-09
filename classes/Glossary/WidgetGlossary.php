@@ -10,8 +10,7 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
 
   protected $_params = array(
   'struct'         => '',
-  'glossary_path'  => '',
-  'page_h1'        => 'Глоссарий',
+  'page_h1'        => '',
   'css_class'      => 'widget-glossary',
   'template'       => 'default.twig',
   );
@@ -27,14 +26,12 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
 
   static public function index() {
     $a = \Cetera\Application::getInstance();
+    $catalog = $a->getCatalog();
+    $data = self::getMaterialsData();
 
-    $data = Data::getData();
-    $glossaryPath = Options::getPath();
-
-    //Маски мета-тегов
-    $title = Options::getTitle();
-    $description = Options::getDescription();
-    $keywords = Options::getKeywords();
+    $title = $catalog['meta_title'];
+    $description = $catalog['meta_description'];
+    $keywords = $catalog['meta_keywords'];
 
     if(!empty($title)) {
       $a->setPageProperty('title', $title);
@@ -49,12 +46,24 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
     }
 
     $a->getWidget('Glossary', array(
-      'struct' => self::createTemplateGlossaryData($glossaryPath, $data),
-      'glossary_path' => $glossaryPath
+      'page_h1' => $catalog['name'],
+      'struct' => self::createTemplateGlossaryData($data)
     ))->display();
   }
 
-  public function createTemplateGlossaryData($glossaryPath, $data) {
+  protected function getMaterialsData() {
+    $catalog = \Cetera\Application::getInstance()->getCatalog();
+    $materials = $catalog->getMaterials();
+    $data = [];
+    for($i = 0; $i < count($materials); $i++) {
+      $termData = Data::getMaterialData($materials[$i]);
+      $data[] = $termData;
+    }
+
+    return $data;
+  }
+
+  public function createTemplateGlossaryData($data) {
     $result = [];
     foreach ($data as $item) {
         $char = mb_strtoupper(mb_substr($item['term'], 0, 1));

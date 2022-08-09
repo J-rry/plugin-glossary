@@ -5,41 +5,40 @@ namespace Glossary;
 class PageHandler {
 
   static protected $data;
-  static protected $glossaryPath;
 
-  static public function init($glossaryPath) {
-    $address = $_SERVER['REQUEST_URI'];
-
-    if(empty($glossaryPath) || strpos($address, $glossaryPath) === false) {
-      self::$glossaryPath = $glossaryPath;
-      $application = \Cetera\Application::getInstance();
-      $application->registerOutputHandler(["\Glossary\PageHandler", "wrapTermsOnPage"]);
-    }
+  static public function init() {
+    $application = \Cetera\Application::getInstance();
+    $application->registerOutputHandler(["\Glossary\PageHandler", "wrapTermsOnPage"]);
   }
 
-  protected function createDataForReferences($data) {
-    $newData = array_reduce($data, function($result, $term) {
-      $termsAndSynonyms = empty($term['synonyms']) ? [$term['term']] : [$term['term'], ...mb_split(", ?", $term['synonyms'])];
-      $termsAndSynonymsData = array_map(fn($termName) => 
-        ['term' => $termName, 'specification' => $term['specification'], 'alias' => $term['alias']], $termsAndSynonyms);
-      $result = [...$result, ...$termsAndSynonymsData];
-      return $result;
-    }, []);
-    return $newData;
+  static public function wrapTermsOnPage(&$res) {
+    $newHtml = $res;
+    $htmlWithoutNoIndexContent = self::replaceNoIndexContent($newHtml);
+    self::$data = self::getContainsTermsData($htmlWithoutNoIndexContent);
+    for($i = 0; $i < count(self::$data); $i++) {
+      $term = self::$data[$i];
+      $findTerm = self::findTermPos($htmlWithoutNoIndexContent, $newHtml, $term);
+      if($findTerm !== false) {
+        $wrappedTerm = self::wrapTerm($findTerm['term'], $term['url']);
+        $newHtml = substr_replace($newHtml, $wrappedTerm, $findTerm['start'], $findTerm['length']);
+        $htmlWithoutNoIndexContent = substr_replace($htmlWithoutNoIndexContent, str_repeat('|', strlen($wrappedTerm)), $findTerm['start'], $findTerm['length']);
+      } 
+    }
+
+    $res = $newHtml;
   }
 
-  protected function wrapTerm($text, $specification, $alias) {
-    $glossaryPath = self::$glossaryPath;
+  protected function replaceNoIndexContent($html) {
+    $noIndexTags = 
+    '<abbr.*?>.*?</abbr>|<a.*?>.*?</a>|<form.*?>.*?</form>|<script.*?>.*?</script>|<style.*?>.*?</style>|<title.*?>.*?</title>|<h\d.*?>.*?</h\d>|<!--.*?-->|<button.*?>.*?</button>|<head.*?>.*?</head>|<iframe.*?>.*?</iframe>|<embed.*?>.*?</embed>|<object.*?>.*?</object>|<audio.*?>.*?</audio>|<video.*?>.*?</video>|<source.*?>.*?</source>|<pre.*?>.*?</pre>|<nav.*?>.*?</nav>|<svg.*?>.*?</svg>|<code.*?>.*?</code>|<cite.*?>.*?</cite>|<canvas.*?>.*?</canvas>';
+    $withoutNoIndexTags = mb_ereg_replace_callback($noIndexTags, fn($match) => str_repeat('|', strlen($match[0])), $html);
+    $onlyText = mb_ereg_replace_callback("<.*?>", fn($match) => str_repeat('|', strlen($match[0])), $withoutNoIndexTags); 
 
-    if($glossaryPath === '') {
-      return "<abbr title='$specification'>$text</abbr>";
-    }
-    $link = $glossaryPath . $alias;
-    return "<a href='$link' title='$specification'>$text</a>";
+    return $onlyText;
   }
 
   protected function getContainsTermsData($html) {
-    $data = Data::getData();
+    $data = self::getData();
     $termsAndSynonyms = self::createDataForReferences($data);
 
     $terms = array_reduce($termsAndSynonyms, function($result, $termData) use ($html) {
@@ -53,11 +52,33 @@ class PageHandler {
     return self::getOtherTermsContainsTerm($terms);
   }
 
+  protected function getData() {
+    $typeId = \Cetera\ObjectDefinition::findByAlias('glossary')->getId();
+    $glossaryMaterials = \Cetera\ObjectDefinition::findById($typeId)->getMaterials();
+
+    $data = [];
+    for($i = 0; $i < count($glossaryMaterials); $i++) {
+      $data[$glossaryMaterials[$i]['alias']] = Data::getMaterialData($glossaryMaterials[$i]);
+    }
+    return array_values($data);
+  }
+
+  protected function createDataForReferences($data) {
+    $newData = array_reduce($data, function($result, $term) {
+      $termsAndSynonyms = empty($term['synonyms']) ? [$term['term']] : [$term['term'], ...mb_split(", ?", $term['synonyms'])];
+      $termsAndSynonymsData = array_map(fn($termName) => 
+        ['term' => $termName, 'specification' => $term['specification'], 'url' => $term['url']], $termsAndSynonyms);
+      $result = [...$result, ...$termsAndSynonymsData];
+      return $result;
+    }, []);
+    return $newData;
+  }
+
   protected function getOtherTermsContainsTerm($terms) {
     $newData = array_reduce($terms, function($result, $termData) use ($terms) {
       $references = [];
       foreach($terms as $termData2) {
-        if($termData['alias'] !== $termData2['alias'] && preg_match(self::termFindRegExp($termData['term']), $termData2['term']) === 1) {
+        if($termData['url'] !== $termData2['url'] && preg_match(self::termFindRegExp($termData['term']), $termData2['term']) === 1) {
           $references[] = $termData2['term'];
         }
       }
@@ -66,19 +87,6 @@ class PageHandler {
       return $result;
     }, []);
     return $newData;
-  }
-
-  public function termFindRegExp($term) {
-    return '/([^a-zа-яА-ЯЁё\.-]' . $term . '$|^' . $term . '[^a-zа-яА-ЯЁё\.-]|[^a-zа-яА-ЯЁё\.-]'. $term . '[^a-zа-яА-ЯЁё-])/ui';
-  }
-
-  protected function replaceNoIndexContent($html) {
-    $noIndexTags = 
-    '<abbr.*?>.*?</abbr>|<a.*?>.*?</a>|<form.*?>.*?</form>|<script.*?>.*?</script>|<style.*?>.*?</style>|<title.*?>.*?</title>|<h1.*?>.*?</h1>|<!--.*?-->|<button.*?>.*?</button>|<head.*?>.*?</head>|<iframe.*?>.*?</iframe>|<embed.*?>.*?</embed>|<object.*?>.*?</object>|<audio.*?>.*?</audio>|<video.*?>.*?</video>|<source.*?>.*?</source>|<pre.*?>.*?</pre>|<nav.*?>.*?</nav>|<svg.*?>.*?</svg>|<code.*?>.*?</code>|<cite.*?>.*?</cite>|<canvas.*?>.*?</canvas>';
-    $withoutNoIndexTags = mb_ereg_replace_callback($noIndexTags, fn($match) => str_repeat('|', strlen($match[0])), $html);
-    $onlyText = mb_ereg_replace_callback("<.*?>", fn($match) => str_repeat('|', strlen($match[0])), $withoutNoIndexTags); 
-
-    return $onlyText;
   }
 
   protected function findTermPos($htmlWithoutNoIndexContent, $newHtml, $term) {
@@ -100,31 +108,22 @@ class PageHandler {
     return false;
   }
 
+  public function termFindRegExp($term) {
+    return '/([^a-zа-яА-ЯЁё\.-]' . $term . '$|^' . $term . '[^a-zа-яА-ЯЁё\.-]|[^a-zа-яА-ЯЁё\.-]'. $term . '[^a-zа-яА-ЯЁё-])/ui';
+  }
+
   protected function termFinded($term) {
     $data = self::$data;
 
     $updateData = array_map(function($termData) use ($term) {
-      if($term['alias'] === $termData['alias'])
+      if($term['url'] === $termData['url'])
         $termData['isFinded'] = true;
       return $termData;
     }, $data);
     self::$data = $updateData;
   }
 
-  static public function wrapTermsOnPage(&$res) {
-    $newHtml = $res;
-    $htmlWithoutNoIndexContent = self::replaceNoIndexContent($newHtml);
-    self::$data = self::getContainsTermsData($newHtml);
-    for($i = 0; $i < count(self::$data); $i++) {
-      $term = self::$data[$i];
-      $findTerm = self::findTermPos($htmlWithoutNoIndexContent, $newHtml, $term);
-      if($findTerm !== false) {
-        $wrappedTerm = self::wrapTerm($findTerm['term'], $term['specification'], $term['alias']);
-        $newHtml = substr_replace($newHtml, $wrappedTerm, $findTerm['start'], $findTerm['length']);
-        $htmlWithoutNoIndexContent = substr_replace($htmlWithoutNoIndexContent, str_repeat('|', strlen($wrappedTerm)), $findTerm['start'], $findTerm['length']);
-      } 
-    }
-
-    $res = $newHtml;
+  protected function wrapTerm($text, $link) {
+    return "<a href='$link' title='Определение термина &#171;$text&#187;'>$text</a>";
   }
 }

@@ -12,7 +12,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
 
   protected $_params = array(
   'term'           => '',
-  'description'    => '',
+  'specification'  => '',
   'synonyms'       => '',
   'links'          => '',
   'css_class'      => 'widget-glossary-term',
@@ -29,18 +29,11 @@ class WidgetTerm extends \Cetera\Widget\Templateable
 
   static public function index() {
     $a = \Cetera\Application::getInstance();
-    $address = explode("/", $_SERVER['REQUEST_URI']);
-    $termAlias = (substr($_SERVER['REQUEST_URI'], -1) !== '/') ? $address[count($address) - 1] : $address[count($address) - 2];
-    $termData = Data::getTermDataByAlias($termAlias);
+    $termData = self::getTermData();
 
-    if($termData === false) {
-      $twig = $a->getTwig();
-      $twig->display('page_section.twig', []);
-    } else {
-      $title = str_replace('{=term}', $termData['term'],  Options::getTermTitleMask());
-      $description = str_replace('{=term}', $termData['term'],  Options::getTermDescriptionMask());
-      $keywords = str_replace('{=term}', $termData['term'],  Options::getTermKeywordsMask());
-
+    $title = $termData['meta_title'];
+    $description = $termData['meta_description'];
+    $keywords = $termData['meta_keywords'];
 
     if(!empty($title)) {
       $a->setPageProperty('title', $title);
@@ -54,15 +47,29 @@ class WidgetTerm extends \Cetera\Widget\Templateable
       $a->setPageProperty('keywords', $keywords);
     }
 
-      $a->getWidget('Term', array(
-        'term'          => $termData['term'],
-        'specification' => $termData['specification'],
-        'synonyms'      => $termData['synonyms'],
-        'links'         => self::findTermReference($termData)
-        ))->display();
-    }
+    $a->getWidget('Term', array(
+      'term'          => $termData['term'],
+      'specification' => $termData['specification'],
+      'synonyms'      => $termData['synonyms'],
+      'links'         => self::findTermReference($termData)
+      ))->display();
   }
 
+  static public function getMaterialAlias() {
+    $address = explode("/", $_SERVER['REQUEST_URI']);
+    $alias = substr($_SERVER['REQUEST_URI'], -1) !== '/' ? $address[count($address) - 1] : $address[count($address) - 2];
+
+    return $alias;
+  }
+
+  protected function getTermData() {
+    $alias = self::getMaterialAlias();
+    $catalog = \Cetera\Application::getInstance()->getCatalog();
+    $materials = $catalog->getMaterials()->where("alias='$alias'");
+    $termData = Data::getMaterialData($materials[0]);
+
+    return $termData;
+  }
 
   protected function findTermReference($term) {
     $termAndSynonyms = empty($term['synonyms']) ? [$term['term']] : [$term['term'], ...mb_split(", ?", $term['synonyms'])];

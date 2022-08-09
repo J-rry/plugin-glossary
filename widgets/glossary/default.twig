@@ -26,7 +26,7 @@
 						<h2>{{ m['char'] }}</h2>
 							<ul>
 							{% for n in m['data'] %}
-							<li><a href="{{ widget.getParam('glossary_path') }}{{ n['alias'] }}" title="Описание термина &#171;{{ n['term'] }}&#187;">{{ n['term'] }}</a></li>
+							<li><a href="{{ n['url'] }}" title="Описание термина &#171;{{ n['term'] }}&#187;">{{ n['term'] }}</a></li>
 							{% endfor %}
 						</ul>
 					{% endfor %}  
