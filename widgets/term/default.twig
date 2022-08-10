@@ -21,49 +21,29 @@
 		<div class="grid-container">
 			<div class="grid-x grid-padding-x">
 				<div class="cell">
-					<div class="{{ widget.getParam('css_class') }}">
-					
-						<div class="grid-container">
-							<div class="grid-x grid-padding-x">
-								<div class="cell">
-									<div class="{{ widget.getParam('css_class') }}__specification">
-										{{ widget.getParam('specification')|raw }}
-									</div>
-								</div>
-							</div>
-						</div>
-
-						{% if widget.getParam('synonyms') != '' %}
-						<div class="grid-container">
-							<div class="grid-x grid-padding-x">
-								<div class="cell">
-									<div class="{{ widget.getParam('css_class') }}__synonyms padding-bottom-2">Синонимы: {{ widget.getParam('synonyms') }}</div>
-								</div>
-							</div>
-						</div>
-						{% endif %}	
-
-						{% if widget.getParam('links') != [] %}
-						<div class="grid-container">
-							<div class="grid-x grid-padding-x">
-								<div class="cell">
-									<div class="{{ widget.getParam('css_class') }}__links">
-										<p class="margin-bottom-1">Ссылки:</p>
-										<ul>
-											{% for m in widget.getParam('links') %}
-												<li>
-													<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>
-												</li>
-											{% endfor %}
-										</ul>
-									</div>
-								</div>
-							</div>
-						</div>
-						{% endif %}					
-								
+					<div class="{{ widget.getParam('css_class') }}__specification">
+						{{ widget.getParam('specification')|raw }}
 					</div>
 				</div>
+				{% if widget.getParam('synonyms') != '' %}
+				<div class="cell">
+					<div class="{{ widget.getParam('css_class') }}__synonyms padding-bottom-2">Синонимы: {{ widget.getParam('synonyms') }}</div>
+				</div>
+				{% endif %}	
+				{% if widget.getParam('links') != [] %}
+				<div class="cell">
+					<div class="{{ widget.getParam('css_class') }}__links">
+						<p class="margin-bottom-1">Ссылки:</p>
+						<ul>
+							{% for m in widget.getParam('links') %}
+								<li>
+									<a href="{{ m['link'] }}" title="{{ m['title'] }}">{{ m['title'] }}</a>
+								</li>
+							{% endfor %}
+						</ul>
+					</div>
+				</div>
+				{% endif %}											
 			</div>
 		</div>
 	</div>
