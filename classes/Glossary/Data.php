@@ -17,14 +17,7 @@ class Data {
     return false;
   }
 
-  static public function isMaterialExist() {
-    $alias = WidgetTerm::getMaterialAlias();
-    $materials = \Cetera\Application::getInstance()->getCatalog()->getMaterials()->where("alias='$alias'");
-
-    return !!count($materials);
-  }
-
-  static public function getMaterialData($material) {
+  static public function getTermDataFromMaterial($material) {
     return [
       'term' => $material['name'],
       'specification' => $material['specification'],

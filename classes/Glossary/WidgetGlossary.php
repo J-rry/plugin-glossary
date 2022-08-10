@@ -27,7 +27,7 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
   static public function index() {
     $a = \Cetera\Application::getInstance();
     $catalog = $a->getCatalog();
-    $data = self::getMaterialsData();
+    $materials = $catalog->getMaterials();
 
     $title = $catalog['meta_title'];
     $description = $catalog['meta_description'];
@@ -47,28 +47,16 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
 
     $a->getWidget('Glossary', array(
       'page_h1' => $catalog['name'],
-      'struct' => self::createTemplateGlossaryData($data)
+      'struct' => self::createTemplateGlossaryData($materials)
     ))->display();
   }
 
-  protected function getMaterialsData() {
-    $catalog = \Cetera\Application::getInstance()->getCatalog();
-    $materials = $catalog->getMaterials();
-    $data = [];
-    for($i = 0; $i < count($materials); $i++) {
-      $termData = Data::getMaterialData($materials[$i]);
-      $data[] = $termData;
-    }
-
-    return $data;
-  }
-
-  public function createTemplateGlossaryData($data) {
+  public function createTemplateGlossaryData($materials) {
     $result = [];
-    foreach ($data as $item) {
-        $char = mb_strtoupper(mb_substr($item['term'], 0, 1));
-        $result[$char] = $result[$char] ?? ['char' => $char, 'data' => []];
-        $result[$char]['data'][] = $item;
+    for($i = 0; $i < count($materials); $i++) {
+      $char = mb_strtoupper(mb_substr($materials[$i]['name'], 0, 1));
+      $result[$char] = $result[$char] ?? ['char' => $char, 'data' => []];
+      $result[$char]['data'][] = Data::getTermDataFromMaterial($materials[$i]);
     }
     usort($result, fn($a, $b) => $a['char'] <=> $b['char']);
 

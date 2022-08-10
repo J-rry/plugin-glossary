@@ -58,7 +58,7 @@ class PageHandler {
 
     $data = [];
     for($i = 0; $i < count($glossaryMaterials); $i++) {
-      $data[$glossaryMaterials[$i]['alias']] = Data::getMaterialData($glossaryMaterials[$i]);
+      $data[$glossaryMaterials[$i]['alias']] = Data::getTermDataFromMaterial($glossaryMaterials[$i]);
     }
     return array_values($data);
   }

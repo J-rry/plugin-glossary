@@ -1,6 +1,4 @@
 <?php
-$t = $this->getTranslator();
-$t->addTranslation(__DIR__.'/lang');
 
 $this->registerWidget(array(
     'name'    => 'Glossary',
@@ -17,8 +15,8 @@ $this->registerWidget(array(
 $url = \Glossary\Data::catalogUrl();
 if (!!$url) {
     \Glossary\WidgetGlossary::initPage($url);
-    if(\Glossary\Data::isMaterialExist())
+    if(\Glossary\WidgetTerm::getTermData())
 	    \Glossary\WidgetTerm::initPage($url);
 } else {
-    \Glossary\PageHandler::init($glossaryPath);
+    \Glossary\PageHandler::init();
 }

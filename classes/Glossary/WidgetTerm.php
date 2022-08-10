@@ -9,6 +9,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
 	use \Cetera\Widget\Traits\Material;
 
   static protected $links = [];
+  static protected $data = [];
 
   protected $_params = array(
   'term'           => '',
@@ -29,7 +30,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
 
   static public function index() {
     $a = \Cetera\Application::getInstance();
-    $termData = self::getTermData();
+    $termData = self::$data;
 
     $title = $termData['meta_title'];
     $description = $termData['meta_description'];
@@ -55,20 +56,18 @@ class WidgetTerm extends \Cetera\Widget\Templateable
       ))->display();
   }
 
-  static public function getMaterialAlias() {
+  static public function getTermData() {
     $address = explode("/", $_SERVER['REQUEST_URI']);
     $alias = substr($_SERVER['REQUEST_URI'], -1) !== '/' ? $address[count($address) - 1] : $address[count($address) - 2];
-
-    return $alias;
-  }
-
-  protected function getTermData() {
-    $alias = self::getMaterialAlias();
     $catalog = \Cetera\Application::getInstance()->getCatalog();
     $materials = $catalog->getMaterials()->where("alias='$alias'");
-    $termData = Data::getMaterialData($materials[0]);
 
-    return $termData;
+    if(!count($materials))
+      return false;
+
+    self::$data = Data::getTermDataFromMaterial($materials[0]);
+
+    return true;
   }
 
   protected function findTermReference($term) {
