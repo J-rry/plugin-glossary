@@ -64,7 +64,7 @@ class WidgetTerm extends \Cetera\Widget\Templateable
 
     $a->getWidget('Term', array(
       'material'      => $termMaterial,
-      'links'         => $cachedLinks ?: self::findTermReference($termMaterial)
+      'links'         => $cachedLinks ?: $links
       ))->display();
   }
 
