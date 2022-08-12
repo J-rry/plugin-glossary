@@ -15,16 +15,19 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
   'template'       => 'default.twig',
   );
 
-  static public function initPage($glossaryPath) {
+  static public function initPage($glossaryCatalogs) {
     $router = \Cetera\Application::getInstance()->getRouter();
-    $router->addRoute('glossary', Regex::factory([
-      'regex' => $glossaryPath . '?',
-      'defaults' => ['controller' => '\Glossary\WidgetGlossary', 'action' => 'index'],
-      'spec' => $glossaryPath,
-    ]), 1);
+    for($i = 0; $i < count($glossaryCatalogs); $i++) {
+      $url = $glossaryCatalogs[$i]->getUrl();
+      $router->addRoute('glossary-' . (string)$i, Regex::factory([
+        'regex' => $url . '?',
+        'defaults' => ['controller' => '\Glossary\WidgetGlossary', 'action' => 'index'],
+        'spec' => $url,
+      ]), 1);
+    }
   }
 
-  static public function index() {
+  static public function index($params) {
     $a = \Cetera\Application::getInstance();
     $catalog = $a->getCatalog();
     $materials = $catalog->getMaterials();
@@ -51,12 +54,12 @@ class WidgetGlossary extends \Cetera\Widget\Templateable
     ))->display();
   }
 
-  public function createTemplateGlossaryData($materials) {
+  static protected function createTemplateGlossaryData($materials) {
     $result = [];
     for($i = 0; $i < count($materials); $i++) {
       $char = mb_strtoupper(mb_substr($materials[$i]['name'], 0, 1));
       $result[$char] = $result[$char] ?? ['char' => $char, 'data' => []];
-      $result[$char]['data'][] = Data::getTermDataFromMaterial($materials[$i]);
+      $result[$char]['data'][] = $materials[$i];
     }
     usort($result, fn($a, $b) => $a['char'] <=> $b['char']);
 

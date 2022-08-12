@@ -4,22 +4,27 @@ namespace Glossary;
 
 class PageHandler {
 
-  static protected $data;
+  protected $data;
 
-  static public function init() {
-    $application = \Cetera\Application::getInstance();
-    $application->registerOutputHandler(["\Glossary\PageHandler", "wrapTermsOnPage"]);
+  static public function init($glossaryCatalogs) {
+    $a = \Cetera\Application::getInstance();
+    $currentCatalogUrl = $a->getCatalog()->getUrl();
+    for($i = 0; $i < count($glossaryCatalogs); $i++) {
+      if($currentCatalogUrl === $glossaryCatalogs[$i]->getUrl())
+        return;
+    }
+    $a->registerOutputHandler(new self());
   }
 
-  static public function wrapTermsOnPage(&$res) {
+  public function __invoke(&$res) {
     $newHtml = $res;
-    $htmlWithoutNoIndexContent = self::replaceNoIndexContent($newHtml);
-    self::$data = self::getContainsTermsData($htmlWithoutNoIndexContent);
-    for($i = 0; $i < count(self::$data); $i++) {
-      $term = self::$data[$i];
-      $findTerm = self::findTermPos($htmlWithoutNoIndexContent, $newHtml, $term);
+    $htmlWithoutNoIndexContent = $this->replaceNoIndexContent($newHtml);
+    $this->data = $this->getContainsTermsData($htmlWithoutNoIndexContent);
+    for($i = 0; $i < count($this->data); $i++) {
+      $term = $this->data[$i];
+      $findTerm = $this->findTermPos($htmlWithoutNoIndexContent, $newHtml, $term);
       if($findTerm !== false) {
-        $wrappedTerm = self::wrapTerm($findTerm['term'], $term['url']);
+        $wrappedTerm = $this->wrapTerm($findTerm['term'], $term['url']);
         $newHtml = substr_replace($newHtml, $wrappedTerm, $findTerm['start'], $findTerm['length']);
         $htmlWithoutNoIndexContent = substr_replace($htmlWithoutNoIndexContent, str_repeat('|', strlen($wrappedTerm)), $findTerm['start'], $findTerm['length']);
       } 
@@ -30,7 +35,7 @@ class PageHandler {
 
   protected function replaceNoIndexContent($html) {
     $noIndexTags = 
-    '<abbr.*?>.*?</abbr>|<a.*?>.*?</a>|<form.*?>.*?</form>|<script.*?>.*?</script>|<style.*?>.*?</style>|<title.*?>.*?</title>|<h\d.*?>.*?</h\d>|<!--.*?-->|<button.*?>.*?</button>|<head.*?>.*?</head>|<iframe.*?>.*?</iframe>|<embed.*?>.*?</embed>|<object.*?>.*?</object>|<audio.*?>.*?</audio>|<video.*?>.*?</video>|<source.*?>.*?</source>|<pre.*?>.*?</pre>|<nav.*?>.*?</nav>|<svg.*?>.*?</svg>|<code.*?>.*?</code>|<cite.*?>.*?</cite>|<canvas.*?>.*?</canvas>';
+    '<abbr.*?>.*?</abbr>|<a.*?>.*?</a>|<form.*?>.*?</form>|<script.*?>.*?</script>|<style.*?>.*?</style>|<title.*?>.*?</title>|<h\d.*?>.*?</h\d>|<!--.*?-->|<button.*?>.*?</button>|<head.*?>.*?</head>|<iframe.*?>.*?</iframe>|<embed.*?>.*?</embed>|<object.*?>.*?</object>|<audio.*?>.*?</audio>|<video.*?>.*?</video>|<source.*?>.*?</source>|<pre.*?>.*?</pre>|<nav.*?>.*?</nav>|<svg.*?>.*?</svg>|<code.*?>.*?</code>|<cite.*?>.*?</cite>|<canvas.*?>.*?</canvas>|<noscript.*?>.*?</noscript>';
     $withoutNoIndexTags = mb_ereg_replace_callback($noIndexTags, fn($match) => str_repeat('|', strlen($match[0])), $html);
     $onlyText = mb_ereg_replace_callback("<.*?>", fn($match) => str_repeat('|', strlen($match[0])), $withoutNoIndexTags); 
 
@@ -38,8 +43,9 @@ class PageHandler {
   }
 
   protected function getContainsTermsData($html) {
-    $data = self::getData();
-    $termsAndSynonyms = self::createDataForReferences($data);
+    $typeId = \Cetera\ObjectDefinition::findByAlias('glossary')->getId();
+    $glossaryMaterials = \Cetera\ObjectDefinition::findById($typeId)->getMaterials();
+    $termsAndSynonyms = $this->createDataForReferences($glossaryMaterials);
 
     $terms = array_reduce($termsAndSynonyms, function($result, $termData) use ($html) {
       if(mb_stripos($html, $termData['term']) !== false) {
@@ -49,36 +55,26 @@ class PageHandler {
       return $result;
     },[]);
     
-    return self::getOtherTermsContainsTerm($terms);
+    return $this->getOtherTermsContainsTerm($terms);
   }
 
-  protected function getData() {
-    $typeId = \Cetera\ObjectDefinition::findByAlias('glossary')->getId();
-    $glossaryMaterials = \Cetera\ObjectDefinition::findById($typeId)->getMaterials();
-
+  protected function createDataForReferences($materials) {
     $data = [];
-    for($i = 0; $i < count($glossaryMaterials); $i++) {
-      $data[$glossaryMaterials[$i]['alias']] = Data::getTermDataFromMaterial($glossaryMaterials[$i]);
-    }
-    return array_values($data);
-  }
-
-  protected function createDataForReferences($data) {
-    $newData = array_reduce($data, function($result, $term) {
-      $termsAndSynonyms = empty($term['synonyms']) ? [$term['term']] : [$term['term'], ...mb_split(", ?", $term['synonyms'])];
+    for($i = 0; $i < count($materials); $i++) {
+      $term = $materials[$i];
+      $termsAndSynonyms = empty($term['synonyms']) ? [$term['name']] : [$term['name'], ...mb_split(", ?", $term['synonyms'])];
       $termsAndSynonymsData = array_map(fn($termName) => 
-        ['term' => $termName, 'specification' => $term['specification'], 'url' => $term['url']], $termsAndSynonyms);
-      $result = [...$result, ...$termsAndSynonymsData];
-      return $result;
-    }, []);
-    return $newData;
+        ['term' => $termName, 'url' => $term->getUrl()], $termsAndSynonyms);
+      $data = [...$data, ...$termsAndSynonymsData];
+    }
+    return $data;
   }
 
   protected function getOtherTermsContainsTerm($terms) {
     $newData = array_reduce($terms, function($result, $termData) use ($terms) {
       $references = [];
       foreach($terms as $termData2) {
-        if($termData['url'] !== $termData2['url'] && preg_match(self::termFindRegExp($termData['term']), $termData2['term']) === 1) {
+        if($termData['url'] !== $termData2['url'] && preg_match($this->termFindRegExp($termData['term']), $termData2['term']) === 1) {
           $references[] = $termData2['term'];
         }
       }
@@ -96,12 +92,12 @@ class PageHandler {
           $htmlWithoutNoIndexContent = mb_ereg_replace_callback($containingTerm, fn($match) => str_repeat('|', strlen($match[0])), $htmlWithoutNoIndexContent); 
         }
       }
-      $regExp = self::termFindRegExp($term['term']);
+      $regExp = $this->termFindRegExp($term['term']);
       $isHaveTerm = preg_match($regExp, $htmlWithoutNoIndexContent, $matches, PREG_OFFSET_CAPTURE);
     }
 
     if($isHaveTerm === 1) {
-      self::termFinded($term);
+      $this->termFinded($term);
       return ['start' => $matches[0][1] + 1, 'length' => strlen($term['term']), 'term' => mb_substr($matches[0][0], 1, mb_strlen($term['term']))];
     }
 
@@ -113,14 +109,14 @@ class PageHandler {
   }
 
   protected function termFinded($term) {
-    $data = self::$data;
+    $data = $this->data;
 
     $updateData = array_map(function($termData) use ($term) {
       if($term['url'] === $termData['url'])
         $termData['isFinded'] = true;
       return $termData;
     }, $data);
-    self::$data = $updateData;
+    $this->data = $updateData;
   }
 
   protected function wrapTerm($text, $link) {

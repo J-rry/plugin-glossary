@@ -12,11 +12,14 @@ $this->registerWidget(array(
     'not_placeable' => true,
 ));
 
-$url = \Glossary\Data::catalogUrl();
-if (!!$url) {
-    \Glossary\WidgetGlossary::initPage($url);
-    if(\Glossary\WidgetTerm::getTermData())
-	    \Glossary\WidgetTerm::initPage($url);
-} else {
-    \Glossary\PageHandler::init();
+\Cetera\Event::attach(EVENT_CORE_MATERIAL_AFTER_SAVE, function($event, $data){	
+	\Glossary\WidgetTerm::clearCache();
+});
+
+if($this->isFrontOffice()) {
+    $typeId = \Cetera\ObjectDefinition::findByAlias('glossary')->getId();
+    $glossaryCatalogs = \Cetera\ObjectDefinition::findById($typeId)->getCatalogs();
+    \Glossary\WidgetGlossary::initPage($glossaryCatalogs);
+    \Glossary\WidgetTerm::initPage($glossaryCatalogs);
+    \Glossary\PageHandler::init($glossaryCatalogs);
 }
