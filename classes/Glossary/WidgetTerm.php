@@ -29,7 +29,8 @@ class WidgetTerm extends \Cetera\Widget\Templateable
   static public function index($params) {
     $alias = $params['id'];
     $a = \Cetera\Application::getInstance();
-    $materials = $a->getCatalog()->getMaterials()->where("alias='$alias'");
+    $iterator = $a->getCatalog()->getMaterials();
+    $materials = $iterator->where('alias=:d')->setParameter(':d', $alias);
 
     if(count($materials) === 0) {
       $twig = $a->getTwig()->display('page_section.twig', []);
